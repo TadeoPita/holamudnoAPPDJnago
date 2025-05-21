@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Mis Proyectos{% endblock %}
+
+{% block content %}
+<h2 class="mb-4 titulo ">Mis Proyectos</h2>
+
+{% if request.user.is_staff %}
+<a href="{% url 'crear_proyecto' %}" class="btn btn-purple mb-4">+ Nuevo Proyecto</a>
+{% endif %}
+
+<div class="d-flex flex-wrap gap-4">
+    {% for proyecto in proyectos %}
+    <div class="glass-card" style="width: 300px;">
+        <h4 class="titulo-card">{{ proyecto.nombre }}</h4>
+        <p class="texto-card">{{ proyecto.descripcion|default:"Sin descripción" }}</p>
+
+        <div class="d-flex flex-wrap gap-2 center">
+            <a href="{% url 'detalle_proyecto' proyecto.id %}" class="btn btn-white">Ver Tareas</a>
+            
+{% if request.user.is_staff %}<a href="{% url 'crear_tarea' proyecto.id %}" class="btn btn-white">Crear Tareas</a>{% endif %}
+        </div>
+
+        {% if request.user.is_staff %}
+    <div class="d-flex gap-2 mt-2 center">
+        <a href="{% url 'editar_proyecto' proyecto.id %}" class="btn btn-purple">Editar</a>
+        <a href="{% url 'eliminar_proyecto' proyecto.id %}" class="btn btn-danger"> Eliminar</a>
+    </div>
+{% endif %}
+
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

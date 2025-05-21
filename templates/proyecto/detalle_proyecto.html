@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Proyecto: {{ proyecto.nombre }}{% endblock %}
+
+{% block content %}
+<h2 class="titulo">{{ proyecto.nombre }}</h2>
+<p>{{ proyecto.descripcion }}</p>
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-5" style="margin-bottom: 10px;">
+    <a href="{% url 'crear_tarea' proyecto.id %}" class="btn btn-purple">+ Nueva Tarea</a>
+    <a href="{% url 'lista_proyectos' %}" class="btn btn-dark">← Volver</a>
+
+    {% if request.user.is_staff %}
+    <form method="post" style="margin-bottom: -20px;" action="{% url 'crear_columna' proyecto.id %}"
+        class="d-flex align-items-center gap-2 form-crear-columna ms-auto">
+        {% csrf_token %}
+        <input type="text" name="nombre" placeholder="Nueva columna" class="form-control form-control-sm" required
+            style="width: 200px;">
+        <input type="color" name="color" value="#6c63ff" class="form-control form-control-color" title="Color"
+            style="width: 36px; height: 30px; padding: 0; border: none;">
+        <button style="    margin-top: -17px;" type="submit" class="btn btn-purple d-flex align-items-center gap-1">
+            <i class="fa-solid fa-plus"></i> Crear Columna
+        </button>
+    </form>
+    {% endif %}
+</div>
+
+<div class="d-flex flex-wrap gap-4">
+    {% for columna in columnas %}
+    <div class="glass-card" style="width: 300px;" ondragover="event.preventDefault();"
+        ondrop="handleDrop(event, '{{ columna.id }}')" data-columna-id="{{ columna.id }}">
+
+        <!-- 🎨 Línea de color al lado del título -->
+        <div class="d-flex align-items-center justify-content-between mb-2">
+            <div class="d-flex align-items-center">
+                <div
+                    style="width: 6px; height: 24px; background-color: {{ columna.color }}; border-radius: 3px; margin-right: 8px;">
+                </div>
+                <h5 class="m-0" style="color: {{ columna.color }}">{{ columna.nombre }}</h5>
+            </div>
+
+            {% if request.user.is_staff %}
+            <!-- 🎨 Formulario de cambio de color -->
+            <form method="post" action="{% url 'cambiar_color_columna' columna.id %}" class="d-flex align-items-center">
+                {% csrf_token %}
+                <input type="color" name="color" value="{{ columna.color }}"
+                    class="form-control form-control-color mx-2" title="Cambiar color"
+                    style="width: 36px; height: 30px; padding: 0; border: none;    margin-bottom: 1px;">
+                <button type="submit" class="btn btn-sm btn-purple">🎨</button>
+            </form>
+            {% endif %}
+        </div>
+
+        {% for tarea in columna.tareas.all %}
+        {% if tarea.visible_para_todos or request.user in tarea.asignado_a.all %}
+        <div class="card1 my-3" draggable="true" ondragstart="handleDragStart(event)" data-tarea-id="{{ tarea.id }}"
+            hx-get="{% url 'tarea_detalle_modal' tarea.id %}" hx-target="#tareaModal .modal-content" hx-trigger="click"
+            data-bs-toggle="modal" data-bs-target="#tareaModal" style="cursor:pointer;">
+            <div class="card-body p-2 bg-dark text-white">
+                <strong>{{ tarea.titulo }}</strong><br>
+
+                {% if tarea.get_prioridad_display == "Alta" %}
+                <small class="text-danger fw-bold">
+                    <i class="fa-solid fa-fire me-1"></i>{{ tarea.get_prioridad_display }}
+                </small>
+                {% elif tarea.get_prioridad_display == "Media" %}
+                <small class="text-warning fw-bold">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i>{{ tarea.get_prioridad_display }}
+                </small>
+                {% elif tarea.get_prioridad_display == "Baja" %}
+                <small class="text-success fw-bold">
+                    <i class="fa-solid fa-circle fa-3xs me-1"></i>{{ tarea.get_prioridad_display }}
+                </small>
+                {% else %}
+                <small>{{ tarea.get_prioridad_display }}</small>
+                {% endif %}
+
+                <br>
+                <div class="container-card-tarea d-flex justify-content-between align-items-center mt-2">
+                    <small class="text-white">
+                        {{ tarea.fecha_creacion|date:"d M" }} - {{ tarea.fecha_vencimiento|date:"d M" }}
+                    </small>
+
+                    <small class="text container-usuario d-flex gap-1">
+                        {% for u in tarea.asignado_a.all %}
+                        {% if not u.is_staff %}
+                        <span class="avatar-inicial" title="{{ u.get_full_name|default:u.username }}">
+                            {{ u.first_name|default:u.username|slice:":1" }}{{ u.last_name|slice:":1" }}
+                        </span>
+                        {% endif %}
+                        {% empty %}
+                        <em>No asignados</em>
+                        {% endfor %}
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+
+<!-- JS para Drag & Drop -->
+<script>
+    document.body.addEventListener('htmx:configRequest', function (event) {
+        const token = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (token) {
+            event.detail.headers['X-CSRFToken'] = token.value;
+        }
+    });
+</script>
+
+<script>
+
+    function handleDrop(event, nuevaColumnaId) {
+        if (!draggedTareaId) return;
+
+        const url = "{% url 'mover_tarea' 0 %}".replace("0", draggedTareaId);
+
+        fetch(url, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ columna_id: nuevaColumnaId })
+        })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();
+                }
+            });
+    }
+</script>
+{% endblock %}
