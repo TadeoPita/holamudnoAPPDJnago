@@ -1,115 +1,154 @@
-<!-- Token CSRF escondido para HTMX JS -->
-<form style="display: none;">
-  {% csrf_token %}
-</form>
-
-<div class="modal-header">
-  <h5 class="modal-title">{{ tarea.titulo }}</h5>
-  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-</div>
-
-<div class="modal-body">
-  <p class="text-muted"><strong>Proyecto:</strong> {{ tarea.proyecto.nombre }}</p>
-  <p><strong>Descripción:</strong> {{ tarea.descripcion|default:"Sin descripción" }}</p>
-  <p><strong>Prioridad:</strong> {{ tarea.get_prioridad_display }}</p>
-  <p><strong>Vencimiento:</strong> {{ tarea.fecha_vencimiento }}</p>
-  <p><strong>Completada:</strong> {{ tarea.completada|yesno:"Sí,No" }}</p>
-
-  <p><strong>Asignada a:</strong>
-    {% for user in tarea.asignado_a.all %}
-    {{ user.get_full_name|default:user.username }}{% if not forloop.last %}, {% endif %}
-    {% empty %}
-    <em>No asignado</em>
-    {% endfor %}
-  </p>
-
-  <p><strong>Modificado por:</strong> {{ tarea.modificado_por }}</p>
-
-
-
-  <hr style="color: #0054d3; border: solid 2px;">
-  <h6>✅ Checklist</h6>
-  <ul class="list-group mb-3" id="checklist-list">
-    {% for item in checklist %}
-    {% include 'tarea/components/checklist_item.html' %}
-    {% empty %}
-    <li class="list-group-item text-muted">Sin ítems</li>
-    {% endfor %}
-  </ul>
-
-  {% if request.user in tarea.proyecto.usuarios_asignados.all %}
-  <form hx-post="{% url 'agregar_checklist' tarea.id %}" hx-target="#checklist-list" hx-swap="beforeend" class="mb-3">
-    {% csrf_token %}
-    <div class="mb-2">
-      {{ checklist_form.descripcion }}
-    </div>
-    <div class="mb-2">
-      {{ checklist_form.asignado_a }}
-    </div>
-    <button type="submit" class="btn btn-purple">Agregar ítem</button>
-  </form>
-  {% endif %}
-
-  <hr style="color: #0054d3; border: solid 2px;">
-  <h6>💬 Comentarios</h6>
-  <ul class="list-group mb-3" id="comentarios-list">
-    {% for comentario in comentarios %}
-    {% include 'tarea/components/comentario_item.html' %}
-    {% empty %}
-    <li class="list-group-item text-muted">Sin comentarios aún.</li>
-    {% endfor %}
-  </ul>
-
-  {% if request.user in tarea.proyecto.usuarios_asignados.all %}
-  <form hx-post="{% url 'agregar_comentario' tarea.id %}" hx-target="#comentarios-list" hx-swap="beforeend">
-    {% csrf_token %}
-    {{ comentario_form.texto }}
-    <button type="submit" class="btn btn-purple mt-2">Comentar</button>
-  </form>
-  {% endif %}
-
-  <hr style="color: #0054d3; border: solid 2px;">
-  <h6>📎 Adjuntos</h6>
-  <ul class="list-group mb-3" id="adjuntos-list">
-    {% for adj in tarea.adjuntos.all %}
-    {% include 'tarea/components/adjunto_item.html' with adj=adj %}
-    {% empty %}
-    <li class="list-group-item text-muted">Sin adjuntos</li>
-    {% endfor %}
-  </ul>
-
-  {% if request.user in tarea.proyecto.usuarios_asignados.all or request.user.is_staff %}
-  <form hx-post="{% url 'agregar_adjunto' tarea.id %}" hx-encoding="multipart/form-data" hx-target="#adjuntos-list"
-    hx-swap="beforeend" enctype="multipart/form-data" method="POST" class="adjunto-form mt-2">
-    {% csrf_token %}
-    <div class="mb-2">
-      {{ adjunto_form.archivo.label_tag }}
-      {{ adjunto_form.archivo }}
+  <div class="modal-contenido">
+    <!-- Cabecera Modal -->
+    <div class="modal-cabecera">
+      <div class="modal-cabecera-izquierda">
+        <i class="fa-solid fa-list-check"></i>
+        <span>Detalles de la Tarjeta</span>
+      </div>
+      <button class="cerrar-modal" onclick="cerrarModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
     </div>
 
-    <div class="mb-2">
-      
-      {{ adjunto_form.url.label_tag }}
-      {{ adjunto_form.url }}
+    <!-- Cuerpo Modal -->
+    <div class="modal-cuerpo">
+      <div class="modal-columnas">
+        <!-- Parte principal -->
+        <div class="modal-contenido-principal">
+          <!-- Título -->
+          <div class="modal-titulo-seccion">
+            <h2 id="modal-titulo">{{ tarea.titulo }}</h2>
+          
+              
+            </a>
+          </div>
+
+          <!-- Metadatos -->
+          <div class="modal-metadatos">
+            <div class="modal-etiquetas">
+              <span class="etiqueta-titulo">Etiquetas</span>
+              <div class="etiquetas-lista">
+                <span class="etiqueta-pill bg-success bg-gradient">Proyecto: {{ tarea.proyecto.nombre }}</span>
+                <span class="etiqueta-pill bg-dark bg-gradient">Columna: {{ tarea.columna.nombre }}</span>
+              </div>
+            </div>
+
+            <div class="modal-miembros">
+              <span class="miembros-titulo">Asignado a</span>
+              <div class="miembros-lista">
+                {% for u in tarea.asignado_a.all %}
+                <div class="miembro-avatar" title="{{ u.get_full_name|default:u.username }}">
+                  {{ u.first_name|default:u.username|slice:":1" }}{{ u.last_name|slice:":1" }}
+                </div>
+                {% empty %}
+                <span class="text-white">No asignado</span>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="modal-fecha">
+              <span class="fecha-titulo">Fecha Límite</span>
+              <div class="fecha-valor">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span class="text-white">{{ tarea.fecha_vencimiento|date:"d M" }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Descripción -->
+          <div class="modal-seccion">
+            <div class="seccion-encabezado">
+              <i class="fa-solid fa-align-left"></i>
+              <h3>Descripción</h3>
+            </div>
+            <div class="seccion-contenido descripcion-contenido">
+              <p>{{ tarea.descripcion|default:"Sin descripción" }}</p>
+            </div>
+          </div>
+
+          <!-- Checklist -->
+          <div class="modal-seccion">
+            <div class="seccion-encabezado seccion-encabezado-con-accion">
+              <div class="seccion-titulo">
+                <i class="fa-solid fa-check-square"></i>
+                <h3>Checklist</h3>
+              </div>
+            </div>
+            <ul class="list-group mb-3" id="checklist-list">
+              {% for item in checklist %}
+              {% include 'tarea/components/checklist_item.html' %}
+              {% empty %}
+              <li class="list-group-item text-muted">Sin ítems</li>
+              {% endfor %}
+            </ul>
+
+            {% if request.user in tarea.proyecto.usuarios_asignados.all %}
+            <form hx-post="{% url 'agregar_checklist' tarea.id %}" hx-target="#checklist-list" hx-swap="beforeend">
+              {% csrf_token %}
+              <div class="mb-2">{{ checklist_form.descripcion }}</div>
+              <div class="mb-2">{{ checklist_form.asignado_a }}</div>
+              <button type="submit" class="btn btn-purple">Agregar ítem</button>
+            </form>
+            {% endif %}
+          </div>
+
+          <!-- Comentarios -->
+          <div class="modal-seccion">
+            <div class="seccion-encabezado">
+              <i class="fa-solid fa-comments"></i>
+              <h3>Comentarios</h3>
+            </div>
+            <ul class="list-group mb-3" id="comentarios-list">
+              {% for comentario in comentarios %}
+              {% include 'tarea/components/comentario_item.html' %}
+              {% empty %}
+              <li class="list-group-item text-muted">Sin comentarios aún.</li>
+              {% endfor %}
+            </ul>
+            {% if request.user in tarea.proyecto.usuarios_asignados.all %}
+            <form hx-post="{% url 'agregar_comentario' tarea.id %}" hx-target="#comentarios-list" hx-swap="beforeend">
+              {% csrf_token %}
+              {{ comentario_form.texto }}
+              <button type="submit" class="btn btn-purple mt-2">Comentar</button>
+            </form>
+            {% endif %}
+          </div>
+
+          <!-- Adjuntos -->
+          <div class="modal-seccion">
+            <div class="seccion-encabezado seccion-encabezado-con-accion">
+              <div class="seccion-titulo">
+                <i class="fa-solid fa-paperclip"></i>
+                <h3>Adjuntos</h3>
+              </div>
+            </div>
+            <ul class="list-group mb-3" id="adjuntos-list">
+              {% for adj in tarea.adjuntos.all %}
+              {% include 'tarea/components/adjunto_item.html' with adj=adj %}
+              {% empty %}
+              <li class="list-group-item text-muted">Sin adjuntos</li>
+              {% endfor %}
+            </ul>
+            {% if request.user in tarea.proyecto.usuarios_asignados.all or request.user.is_staff %}
+            <form hx-post="{% url 'agregar_adjunto' tarea.id %}" hx-encoding="multipart/form-data"
+              hx-target="#adjuntos-list" hx-swap="beforeend" enctype="multipart/form-data" method="POST"
+              class="adjunto-form mt-2">
+              {% csrf_token %}
+              <div class="mb-2">{{ adjunto_form.archivo.label_tag }}{{ adjunto_form.archivo }}</div>
+              <div class="mb-2">{{ adjunto_form.url.label_tag }}{{ adjunto_form.url }}</div>
+              <button type="submit" class="btn btn-purple btn-sm">📎 Subir Adjunto</button>
+            </form>
+            {% endif %}
+          </div>
+
+          {% if request.user.is_staff %}
+          <div class="d-flex gap-2 mb-3">
+            <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-dark">Editar</a>
+            <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-red">Eliminar</a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
     </div>
-
-    <button type="submit" class="btn btn-purple btn-sm">📎 Subir Adjunto</button>
-  </form>
-  {% endif %}
-
-  <br><br>
-  {% if request.user.is_staff %}
-  <div class="d-flex gap-2 mb-3">
-    <a href="{% url 'editar_tarea' tarea.id %}" class="btn btn-dark">Editar</a>
-    <a href="{% url 'eliminar_tarea' tarea.id %}" class="btn btn-red">Eliminar</a>
   </div>
-  {% endif %}
 </div>
-<script>
-  document.body.addEventListener('htmx:configRequest', function (event) {
-    const token = document.querySelector('[name=csrfmiddlewaretoken]');
-    if (token) {
-      event.detail.headers['X-CSRFToken'] = token.value;
-    }
-  });
-</script>

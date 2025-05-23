@@ -1,4 +1,4 @@
-<li id="checklist-item-{{ item.id }}" class="list-group-item d-flex justify-content-between align-items-center">
+<li  style="background: rgba(255, 255, 255, 0.05); color: white;" id="checklist-item-{{ item.id }}" class="list-group-item d-flex justify-content-between align-items-center">
   <div class="d-flex align-items-center gap-2">
     <a href="{% url 'completar_checklist_item' item.id %}"
        hx-post="{% url 'completar_checklist_item' item.id %}"
@@ -8,11 +8,11 @@
       {% if item.completado %}
         <i class="fa-solid fa-circle-check text-success"></i>
       {% else %}
-        <i class="fa-regular fa-circle text-muted"></i>
+        <i class="fa-regular fa-circle text-white"></i>
       {% endif %}
     </a>
 
-    <span class="{% if item.completado %}text-decoration-line-through text-muted{% endif %}">
+    <span class="{% if item.completado %}text-decoration-line-through text-white{% endif %}">
       {{ item.descripcion }}
     </span>
   </div>
@@ -20,12 +20,12 @@
   <div class="text-end d-flex align-items-center gap-2">
     <div>
       {% if item.completado_fecha %}
-        <small class="text-muted d-block">{{ item.completado_fecha|date:"d M H:i" }}</small>
+        <small class="text-white d-block">{{ item.completado_fecha|date:"d M H:i" }}</small>
       {% endif %}
       {% if item.asignado_a %}
-        <small class="text-muted"><i class="fa-solid fa-user"></i> {{ item.asignado_a.get_full_name|default:item.asignado_a.username }}</small>
+        <small class="text-white"><i class="fa-solid fa-user"></i> {{ item.asignado_a.get_full_name|default:item.asignado_a.username }}</small>
       {% else %}
-        <small class="text-muted"><i class="fa-solid fa-users"></i> Público</small>
+        <small class="text-white"><i class="fa-solid fa-users"></i> Público</small>
       {% endif %}
     </div>
 

@@ -6,6 +6,11 @@ from .forms import ProyectoForm
 from tarea.forms import TareaForm  # ✅ Así está bien
 from tarea.models import Columna, Tarea
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from tarea.models import Tarea
+from django.utils import timezone
+from datetime import timedelta
 
 @login_required
 def lista_proyectos(request):
@@ -97,4 +102,28 @@ def eliminar_proyecto(request, id):
 
     return render(request, 'proyecto/confirmar_eliminacion.html', {
         'proyecto': proyecto
+    })
+
+
+@login_required
+def inicio(request):
+    hoy = timezone.now().date()
+    tareas_proximas = Tarea.objects.filter(
+        fecha_vencimiento__gte=hoy,
+        fecha_vencimiento__lte=hoy + timedelta(days=7),
+        completada=False
+    ).filter(
+        asignado_a=request.user
+    ) | Tarea.objects.filter(
+        visible_para_todos=True,
+        completada=False
+    )
+
+    tareas_completadas = Tarea.objects.filter(
+        completada=True
+    ).order_by('-fecha_vencimiento')[:5]
+
+    return render(request, 'inicio.html', {
+        'tareas_proximas': tareas_proximas.distinct(),
+        'tareas_completadas': tareas_completadas,
     })

@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}Inicio{% endblock %}
+
+{% block content %}
+<div class="d-flex">
+  <div class="flex-grow-1">
+    <h1 class="mb-4">📊 Panel Principal</h1>
+
+    <div class="row g-4">
+      <!-- Tareas Próximas -->
+      <div class="col-lg-6">
+        <div class="card bg-dark text-white shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">📅 Tareas Próximas</h5>
+            <div class="d-flex flex-column gap-2 mt-3">
+              {% for tarea in tareas_proximas %}
+              <div class="tarjeta">
+                <h6 class="mb-1">{{ tarea.titulo }}</h6>
+                <div class="tarjeta-meta">
+                  <div class="tarjeta-meta-item" title="Proyecto">
+                    <i class="fa-solid fa-folder"></i>
+                    {{ tarea.proyecto.nombre }}
+                  </div>
+                  <div class="tarjeta-meta-item" title="Columna">
+                    <i class="fa-solid fa-layer-group"></i>
+                    {{ tarea.columna.nombre }}
+                  </div>
+                  <div class="tarjeta-meta-item" title="Fecha límite">
+                    <i class="fa-solid fa-calendar"></i>
+                    {{ tarea.fecha_vencimiento|date:"d M" }}
+                  </div>
+                </div>
+              </div>
+              {% empty %}
+              <p class="text-muted mt-3">No hay tareas próximas.</p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tareas Completadas -->
+      <div class="col-lg-6">
+        <div class="card bg-success text-white shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">✅ Tareas Completadas</h5>
+            <div class="d-flex flex-column gap-2 mt-3">
+              {% for tarea in tareas_completadas %}
+              <div class="tarjeta">
+                <h6 class="mb-1">{{ tarea.titulo }}</h6>
+                <div class="tarjeta-meta">
+                  <div class="tarjeta-meta-item" title="Proyecto">
+                    <i class="fa-solid fa-folder"></i>
+                    {{ tarea.proyecto.nombre }}
+                  </div>
+                  <div class="tarjeta-meta-item" title="Columna">
+                    <i class="fa-solid fa-layer-group"></i>
+                    {{ tarea.columna.nombre }}
+                  </div>
+                  <div class="tarjeta-meta-item" title="Fecha límite">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    {{ tarea.fecha_vencimiento|date:"d M" }}
+                  </div>
+                </div>
+              </div>
+              {% empty %}
+              <p class="text-white-50 mt-3">No hay tareas completadas.</p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estadísticas -->
+      <div class="col-12">
+        <div class="card bg-dark text-white shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">📈 Estadísticas de Tareas</h5>
+            <div id="chart-tareas" class="p-2"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Calendario -->
+      <div class="col-12">
+        <div class="card bg-dark text-white shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title">🗓️ Calendario</h5>
+            <div id="calendar-placeholder" class="p-4 text-center">
+              Aquí irá el calendario 👷‍♂️
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+  const options = {
+    chart: {
+      type: 'donut',
+      background: 'transparent'
+    },
+    series: [{{ tareas_completadas.count }}, {{ tareas_proximas.count }}],
+    labels: ['Completadas', 'Próximas'],
+    colors: ['#28a745', '#ffc107']
+  };
+
+  const chart = new ApexCharts(document.querySelector("#chart-tareas"), options);
+  chart.render();
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const calendarPlaceholder = document.getElementById('calendar-placeholder');
+    calendarPlaceholder.innerHTML = '<p>Calendario cargado con éxito 📅</p>';
+  });
+</script>

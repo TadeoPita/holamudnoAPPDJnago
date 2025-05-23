@@ -31,13 +31,13 @@ def tarea_detalle_modal(request, id):
     if not tarea.visible_para_todos and request.user not in tarea.proyecto.usuarios_asignados.all():
         return HttpResponseForbidden()
 
-    # 👑 Admin ve todo
-    if request.user.is_staff:
-        checklist_visibles = tarea.checklist.all()
-    else:
-        checklist_visibles = tarea.checklist.filter(
-        Q(asignado_a=request.user) |
-        (Q(asignado_a__isnull=True) & (Q(tarea__visible_para_todos=True) | Q(tarea__proyecto__usuarios_asignados=request.user)))).distinct()
+    checklist_visibles = (
+        tarea.checklist.all() if request.user.is_staff
+        else tarea.checklist.filter(
+            Q(asignado_a=request.user) |
+            (Q(asignado_a__isnull=True) & (Q(tarea__visible_para_todos=True) | Q(tarea__proyecto__usuarios_asignados=request.user)))
+        ).distinct()
+    )
 
     return render(request, 'tarea/modals/tarea_detalle.html', {
         'tarea': tarea,
@@ -45,7 +45,7 @@ def tarea_detalle_modal(request, id):
         'comentarios': tarea.comentarios.all(),
         'comentario_form': ComentarioForm(),
         'checklist_form': ChecklistForm(),
-        'adjunto_form': AdjuntoForm(),  
+        'adjunto_form': AdjuntoForm(),
     })
 # Listado general de tareas (opcional)
 
@@ -69,10 +69,11 @@ def editar_tarea(request, id):
     if request.method == 'POST':
         form = TareaForm(request.POST, instance=tarea)
         if form.is_valid():
-            tarea = form.save(commit=False)
-            tarea.modificado_por = request.user
-            tarea.save()
-            return redirect('detalle_proyecto', proyecto_id=proyecto.id)
+           tarea = form.save(commit=False)
+           tarea.modificado_por = request.user
+           tarea.save()
+           form.save_m2m()  # << ESTA LÍNEA es la clave para asignado_a (ManyToMany)
+           return redirect('detalle_proyecto', proyecto_id=proyecto.id)
     else:
         form = TareaForm(instance=tarea)
         form.fields['columna'].queryset = proyecto.columnas.all()
@@ -206,7 +207,7 @@ def agregar_adjunto(request, tarea_id):
 from django.views.decorators.csrf import csrf_exempt
 import json
 
-@csrf_exempt  # HTMX y drag necesitan esto si no tenés CSRF configurado
+@csrf_exempt
 @login_required
 def mover_tarea(request, tarea_id):
     if request.method != 'POST':
@@ -214,8 +215,8 @@ def mover_tarea(request, tarea_id):
 
     tarea = get_object_or_404(Tarea, id=tarea_id)
 
-    if request.user not in tarea.proyecto.usuarios_asignados.all() and not request.user.is_staff:
-        return HttpResponseForbidden("No autorizado")
+    if not tarea.visible_para_todos and request.user not in tarea.proyecto.usuarios_asignados.all() and not request.user.is_staff:
+        return HttpResponseForbidden("No tenés permiso para mover esta tarea")
 
     data = json.loads(request.body)
     nueva_columna_id = data.get('columna_id')
@@ -225,8 +226,6 @@ def mover_tarea(request, tarea_id):
     tarea.save()
 
     return JsonResponse({"ok": True})
-
-
 
 @login_required
 def crear_columna(request, proyecto_id):

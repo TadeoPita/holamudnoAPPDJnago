@@ -1,5 +1,5 @@
-<li class="list-group-item">
-  <strong>{{ comentario.autor }}</strong>
-  <small class="text-muted float-end">{{ comentario.fecha_creacion|date:"d M Y H:i" }}</small><br>
-  {{ comentario.texto }}
+<li style="background: rgba(255, 255, 255, 0.05);" class="list-group-item">
+  <strong style="color: rgb(255, 255, 255); text-transform:capitalize;"> <i class="fa-regular fa-comment-dots"></i> {{ comentario.autor }}</strong>
+  <small style="color: rgba(193, 195, 195, 0.601);" class="float-end">{{ comentario.fecha_creacion|date:"d M Y H:i" }}</small><br>
+ <p class="text-white"> {{ comentario.texto }}</p>
 </li>

@@ -31,10 +31,12 @@ urlpatterns = [
 
     path('tarea/<int:tarea_id>/agregar-adjunto/',
          agregar_adjunto, name='agregar_adjunto'),
-    path('tarea/<int:tarea_id>/mover/', mover_tarea, name='mover_tarea'),
+    path('<int:tarea_id>/mover/', mover_tarea,
+         name='mover_tarea'),  # ✅ Coma agregada
     path('proyecto/<int:proyecto_id>/crear-columna/',
          crear_columna, name='crear_columna'),
-    path("tarea/checklist/<int:item_id>/eliminar/", eliminar_checklist_item, name="eliminar_checklist_item")
+    path("tarea/checklist/<int:item_id>/eliminar/",
+         eliminar_checklist_item, name="eliminar_checklist_item")
 
 
 ]

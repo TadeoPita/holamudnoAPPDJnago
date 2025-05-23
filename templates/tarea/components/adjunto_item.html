@@ -1,12 +1,13 @@
-<li class="list-group-item d-flex justify-content-between align-items-center">
-  <div>
+<li style="background: rgba(255, 255, 255, 0.05);"
+  class="list-group-item d-flex justify-content-between align-items-center">
+  <div ">
     {% if adj.archivo %}
-      📁 <a href="{{ adj.archivo.url }}" target="_blank" class="text-black">{{ adj.archivo.name|slice:"10:" }}</a>
+    📁 <a href="{{ adj.archivo.url }}" target="_blank" class="text-white">{{ adj.archivo.name|slice:"10:" }}</a>
     {% elif adj.url %}
-      🔗 <a href="{{ adj.url }}" target="_blank" class="text-black">{{ adj.url }}</a>
+    🔗 <a href="{{ adj.url }}" target="_blank" class="text-white">{{ adj.url }}</a>
     {% endif %}
   </div>
-  <small class="text-muted">
+  <small style="color: rgba(193, 195, 195, 0.601) ;">
     {{ adj.fecha_creacion|date:"d M H:i" }}
   </small>
 </li>

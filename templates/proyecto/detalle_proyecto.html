@@ -3,21 +3,21 @@
 
 {% block content %}
 <h2 class="titulo">{{ proyecto.nombre }}</h2>
-<p>{{ proyecto.descripcion }}</p>
 
-<div class="d-flex flex-wrap align-items-center gap-2 mb-5" style="margin-bottom: 10px;">
+
+<div class="d-flex flex-wrap align-items-center gap-2 mb-5">
     <a href="{% url 'crear_tarea' proyecto.id %}" class="btn btn-purple">+ Nueva Tarea</a>
     <a href="{% url 'lista_proyectos' %}" class="btn btn-dark">← Volver</a>
 
     {% if request.user.is_staff %}
-    <form method="post" style="margin-bottom: -20px;" action="{% url 'crear_columna' proyecto.id %}"
+    <form method="post" action="{% url 'crear_columna' proyecto.id %}"
         class="d-flex align-items-center gap-2 form-crear-columna ms-auto">
         {% csrf_token %}
         <input type="text" name="nombre" placeholder="Nueva columna" class="form-control form-control-sm" required
             style="width: 200px;">
         <input type="color" name="color" value="#6c63ff" class="form-control form-control-color" title="Color"
             style="width: 36px; height: 30px; padding: 0; border: none;">
-        <button style="    margin-top: -17px;" type="submit" class="btn btn-purple d-flex align-items-center gap-1">
+        <button type="submit" class="btn btn-purple d-flex align-items-center gap-1">
             <i class="fa-solid fa-plus"></i> Crear Columna
         </button>
     </form>
@@ -27,8 +27,7 @@
 <div class="d-flex flex-wrap gap-4">
     {% for columna in columnas %}
     <div class="glass-card" style="width: 300px;" ondragover="event.preventDefault();"
-        ondrop="handleDrop(event, '{{ columna.id }}')" data-columna-id="{{ columna.id }}">
-
+        ondrop="handleDrop(event, '{{ columna.id }}')">
         <!-- 🎨 Línea de color al lado del título -->
         <div class="d-flex align-items-center justify-content-between mb-2">
             <div class="d-flex align-items-center">
@@ -44,63 +43,75 @@
                 {% csrf_token %}
                 <input type="color" name="color" value="{{ columna.color }}"
                     class="form-control form-control-color mx-2" title="Cambiar color"
-                    style="width: 36px; height: 30px; padding: 0; border: none;    margin-bottom: 1px;">
+                    style="width: 36px; height: 30px; padding: 0; border: none;">
                 <button type="submit" class="btn btn-sm btn-purple">🎨</button>
             </form>
             {% endif %}
         </div>
 
         {% for tarea in columna.tareas.all %}
-        {% if tarea.visible_para_todos or request.user in tarea.asignado_a.all %}
-        <div class="card1 my-3" draggable="true" ondragstart="handleDragStart(event)" data-tarea-id="{{ tarea.id }}"
-            hx-get="{% url 'tarea_detalle_modal' tarea.id %}" hx-target="#tareaModal .modal-content" hx-trigger="click"
-            data-bs-toggle="modal" data-bs-target="#tareaModal" style="cursor:pointer;">
-            <div class="card-body p-2 bg-dark text-white">
-                <strong>{{ tarea.titulo }}</strong><br>
+        {% if tarea.visible_para_todos or request.user in tarea.asignado_a.all or request.user.is_staff %}
+        <div class="tarjeta my-3" draggable="true" ondragstart="handleDragStart(event)" data-tarea-id="{{ tarea.id }}"
+            hx-get="{% url 'tarea_detalle_modal' tarea.id %}" hx-target="#tarjetaModalContent" hx-swap="innerHTML">
 
-                {% if tarea.get_prioridad_display == "Alta" %}
-                <small class="text-danger fw-bold">
-                    <i class="fa-solid fa-fire me-1"></i>{{ tarea.get_prioridad_display }}
-                </small>
-                {% elif tarea.get_prioridad_display == "Media" %}
-                <small class="text-warning fw-bold">
-                    <i class="fa-solid fa-triangle-exclamation me-1"></i>{{ tarea.get_prioridad_display }}
-                </small>
-                {% elif tarea.get_prioridad_display == "Baja" %}
-                <small class="text-success fw-bold">
-                    <i class="fa-solid fa-circle fa-3xs me-1"></i>{{ tarea.get_prioridad_display }}
-                </small>
-                {% else %}
-                <small>{{ tarea.get_prioridad_display }}</small>
-                {% endif %}
-
-                <br>
-                <div class="container-card-tarea d-flex justify-content-between align-items-center mt-2">
-                    <small class="text-white">
-                        {{ tarea.fecha_creacion|date:"d M" }} - {{ tarea.fecha_vencimiento|date:"d M" }}
-                    </small>
-
-                    <small class="text container-usuario d-flex gap-1">
-                        {% for u in tarea.asignado_a.all %}
-                        {% if not u.is_staff %}
-                        <span class="avatar-inicial" title="{{ u.get_full_name|default:u.username }}">
-                            {{ u.first_name|default:u.username|slice:":1" }}{{ u.last_name|slice:":1" }}
-                        </span>
-                        {% endif %}
-                        {% empty %}
-                        <em>No asignados</em>
-                        {% endfor %}
-                    </small>
+            <!-- Etiquetas de colores (prioridad visual) -->
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="tarjeta-etiquetas">
+                    {% if tarea.get_prioridad_display == "Alta" %}
+                    <span class="etiqueta" style="background-color: var(--card-red);" title="Alta"></span>
+                    {% elif tarea.get_prioridad_display == "Media" %}
+                    <span class="etiqueta" style="background-color: var(--card-orange);" title="Media"></span>
+                    {% elif tarea.get_prioridad_display == "Baja" %}
+                    <span class="etiqueta" style="background-color: var(--card-green);" title="Baja"></span>
+                    {% endif %}
                 </div>
+
+            </div>
+
+            <!-- Título de la tarea -->
+            <h3 class="tarjeta-titulo text-white mb-2">{{ tarea.titulo }}</h3>
+
+            <!-- Meta info: fecha, comentarios, adjuntos, checklist -->
+            <div class="tarjeta-meta mb-2">
+                {% if tarea.fecha_vencimiento %}
+                <div class="tarjeta-meta-item" title="Fecha límite">
+                    <i class="fa-solid fa-calendar"></i>
+                    <span>{{ tarea.fecha_vencimiento|date:"d M" }}</span>
+                </div>
+                {% endif %}
+                <div class="tarjeta-meta-item" title="Comentarios">
+                    <i class="fa-solid fa-comment"></i>
+                    <span>{{ tarea.comentarios.count }}</span>
+                </div>
+                <div class="tarjeta-meta-item" title="Adjuntos">
+                    <i class="fa-solid fa-paperclip"></i>
+                    <span>{{ tarea.adjuntos.count }}</span>
+                </div>
+                <div class="tarjeta-meta-item" title="Checklist">
+                    <i class="fa-regular fa-square-check"></i>
+                    <span>{{ tarea.checklist.count }}</span>
+                </div>
+            </div>
+
+            <!-- Iniciales de miembros -->
+            <div class="tarjeta-miembros">
+                {% for u in tarea.asignado_a.all %}
+                {% if not u.is_staff %}
+                <div class="miembro" title="{{ u.get_full_name|default:u.username }}">
+                    {{ u.first_name|default:u.username|slice:":1" }}{{ u.last_name|slice:":1" }}
+                </div>
+                {% endif %}
+                {% endfor %}
             </div>
         </div>
         {% endif %}
         {% endfor %}
+
     </div>
     {% endfor %}
 </div>
 
-<!-- JS para Drag & Drop -->
+<!-- CSRF para HTMX -->
 <script>
     document.body.addEventListener('htmx:configRequest', function (event) {
         const token = document.querySelector('[name=csrfmiddlewaretoken]');
@@ -110,34 +121,38 @@
     });
 </script>
 
+<!-- JS Drag & Drop funcional -->
 <script>
-  let draggedTareaId = null;
+    let draggedTareaId = null;
 
-  function handleDragStart(event) {
-    draggedTareaId = event.target.dataset.tareaId;
-  }
+    function handleDragStart(event) {
+        draggedTareaId = event.target.dataset.tareaId;
+    }
 
-  function handleDrop(event, nuevaColumnaId) {
-    if (!draggedTareaId) return;
+    function handleDrop(event, nuevaColumnaId) {
+        if (!draggedTareaId) return;
 
-    const url = "{% url 'mover_tarea' 0 %}".replace("0", draggedTareaId);
+        const csrfTokenInput = document.querySelector('[name=csrfmiddlewaretoken]');
+        const csrfToken = csrfTokenInput ? csrfTokenInput.value : '';
 
-    fetch(url, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": document.querySelector('[name=csrfmiddlewaretoken]').value,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ columna_id: nuevaColumnaId })
-    })
-    .then(response => {
-      if (response.ok) {
-        location.reload();
-      } else {
-        console.error("Error al mover la tarea");
-      }
-    });
-  }
+        fetch(`/tarea/${draggedTareaId}/mover/`, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": csrfToken,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ columna_id: nuevaColumnaId })
+        })
+            .then(response => {
+                if (response.ok) {
+                    location.reload();  // recarga para reflejar el cambio
+                } else {
+                    console.error('Error al mover la tarea', response.status);
+                }
+            })
+            .catch(error => {
+                console.error('Error en la petición', error);
+            });
+    }
 </script>
-
 {% endblock %}

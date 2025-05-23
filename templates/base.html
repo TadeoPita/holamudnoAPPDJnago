@@ -13,7 +13,8 @@
     <!-- Font Awesome 6 CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         crossorigin="anonymous">
-
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
     <script>
         document.body.addEventListener('htmx:configRequest', function (event) {
@@ -26,10 +27,11 @@
     <style>
         body {
             background: #0f0f1b;
-            background-image: radial-gradient(#1d1d2c 1px, transparent 1px);
+            background-image: radial-gradient(rgba(255, 255, 255, 0.064) 1.3px, transparent 1px);
             background-size: 20px 20px;
             color: #e2e2e2;
             font-family: 'Segoe UI', sans-serif;
+            overflow-x: hidden;
         }
 
         .container-usuario {
@@ -65,7 +67,7 @@
             border: 1px solid #333;
             border-radius: 8px;
             padding: 8px 12px;
-            color: #e0e0e0;
+            color: rgba(193, 195, 195, 0.601);
             width: 100%;
             margin-bottom: 8px;
         }
@@ -115,7 +117,7 @@
         }
 
         .card1 {
-            background: #bdbdbd;
+            background: #727272;
             border-radius: 15px;
             padding: 2px;
 
@@ -163,6 +165,30 @@
             border: none;
         }
 
+        .Media {
+            width: 55px;
+            height: 10px;
+            background: yellow;
+            border-radius: 20px;
+            margin-bottom: 7px;
+        }
+
+        .Baja {
+            width: 55px;
+            height: 10px;
+            background: rgb(39, 255, 39);
+            border-radius: 20px;
+            margin-bottom: 7px;
+        }
+
+        .Alta {
+            border-radius: 20px;
+            width: 55px;
+            height: 10px;
+            background: red;
+            margin-bottom: 7px;
+        }
+
         .form-control,
         select,
         textarea {
@@ -171,10 +197,11 @@
             border: 1px solid #333;
             border-radius: 10px;
             padding: 0.5rem 1rem;
-            margin-bottom: 1rem;
+
         }
 
         .form-check-input {
+            color: rgba(193, 195, 195, 0.601);
             transform: scale(1.3);
             margin-right: 0.5rem;
         }
@@ -196,21 +223,311 @@
 
         input[type="date"]::-webkit-calendar-picker-indicator {
             filter: invert(1);
+            color: rgba(193, 195, 195, 0.601);
+        }
+
+        /* Nuevos estilos*/
+        :root {
+            --color-bg: #0f1424;
+            --color-bg-lighter: #151b2e;
+            --color-text: #eaeaea;
+            --color-text-muted: #a0a8c0;
+            --color-border: rgba(255, 255, 255, 0.1);
+            --color-primary: #5891db;
+            --color-primary-dark: #3a6eb3;
+            --color-danger: #ff6b6b;
+            --color-danger-dark: #e05353;
+
+            --card-blue: #5B9BD5;
+            --card-green: #70C1B3;
+            --card-orange: #FFB347;
+            --card-red: #FF7F7F;
+            --card-purple: #B19CD9;
+
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.35);
+
+            --transition-fast: 150ms ease;
+            --transition-normal: 250ms ease;
+            --transition-slow: 350ms ease;
+        }
+
+        .tarjeta {
+            background-color: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: 0.75rem;
+            cursor: pointer;
+            transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .tarjeta:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .tarjeta-etiquetas {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .etiqueta {
+            height: 0.5rem;
+            width: 2.5rem;
+            border-radius: var(--radius-sm);
+        }
+
+        .tarjeta-titulo {
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.75rem;
+        }
+
+        .tarjeta-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.5rem;
+            color: var(--color-text-muted);
+            font-size: 0.75rem;
+        }
+
+        .tarjeta-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .tarjeta-meta-item svg {
+            width: 0.875rem;
+            height: 0.875rem;
+        }
+
+        .tarjeta-miembros {
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .miembro {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            background-color: var(--color-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            border: 2px solid var(--color-bg-lighter);
+            margin-left: -0.25rem;
+        }
+
+        .miembro:first-child {
+            margin-left: 0;
+        }
+
+        /* Efecto de brillo para las tarjetas */
+        .tarjeta {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tarjeta::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+            opacity: 0;
+            transform: translate(-100%, -100%);
+            transition: opacity 0.5s ease, transform 1s ease;
+            pointer-events: none;
+        }
+
+        .tarjeta:hover::after {
+            opacity: 1;
+            transform: translate(0, 0);
+        }
+
+        /* slide bar */
+
+        .sidebar {
+            background-color: rgba(15, 15, 30, 0.85);
+            backdrop-filter: blur(12px);
+            width: 60px;
+            /* siempre colapsado */
+            transition: width 0.3s ease;
+            position: fixed;
+            height: 100vh;
+            z-index: 1000;
+        }
+
+        .sidebar .nav-link {
+            color: white;
+            padding: 1rem 0.75rem;
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+
+        .sidebar .nav-link .menu-text {
+            display: none;
+            /* ❌ Ocultar texto permanentemente */
+        }
+
+        /* Tooltip visual al pasar el mouse */
+        .sidebar .nav-link::after {
+            content: attr(title);
+            position: absolute;
+            left: 60px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #151b2e;
+            color: #fff;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            border-radius: 4px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+            z-index: 1001;
+        }
+
+        .sidebar .nav-link:hover::after {
+            opacity: 1;
+        }
+
+        .main-content {
+            margin-left: 30px;
+            padding: 2rem;
+        }
+
+
+        /* inicio */
+        .bg-success {
+            --bs-bg-opacity: 1;
+            background-color: rgb(25 135 84 / 33%) !important;
+            backdrop-filter: blur(1px);
+        }
+
+
+        .textarea-claro {
+            background-color: white !important;
+            color: black !important;
+            border: 1px solid #ccc !important;
+        }
+
+        .textarea-oscuro {
+            background-color: #151b2e !important;
+            color: white !important;
+            border: 1px solid #333 !important;
         }
     </style>
 
 </head>
 
 <body>
-    <div class="container mt-4">
-        {% block content %}{% endblock %}
-    </div>
+    <!-- Sidebar Responsive con glassmorphism -->
+    <nav id="sidebar" class="sidebar">
+        <button id="toggleSidebar" class="toggle-btn" title="Expandir / Colapsar"
+            style="width: 100%; background: none; border: none; padding: 1rem; color: white;">
+            <i class="fa-solid fa-bars"></i>
+        </button>
 
-    <div class="modal fade" id="tareaModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content"><!-- HTMX here --></div>
+        <ul class="nav flex-column text-start mt-3">
+            <li class="nav-item" title="Inicio">
+                <a href="{% url 'inicio' %}" class="nav-link">
+                    <i class="fa-solid fa-house"></i>
+                </a>
+            </li>
+            <li class="nav-item" title="Proyectos">
+                <a href="{% url 'lista_proyectos' %}" class="nav-link">
+                    <i class="fa-solid fa-folder"></i>
+                </a>
+            </li>
+            <li class="nav-item" title="Calendario">
+                <a href="#" class="nav-link">
+                    <i class="fa-solid fa-calendar-days"></i>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Contenido -->
+    <div id="main-content" class="main-content">
+        <div class="container-fluid ">
+            {% block content %}{% endblock %}
         </div>
     </div>
+
+    <!-- Modal HTMX -->
+    <div id="tarjetaModal" class="modal" style="display: none;">
+        <div class="modal-contenido" id="tarjetaModalContent">
+            <!-- Contenido cargado vía HTMX -->
+        </div>
+    </div>
+
+
+    <!-- Toggle JS -->
+    <script>
+        function abrirModal() {
+            const modal = document.getElementById('tarjetaModal');
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.classList.add('mostrar');
+                document.body.style.overflow = 'hidden';
+            }, 10);
+        }
+
+        function cerrarModal() {
+            const modal = document.getElementById('tarjetaModal');
+            modal.classList.remove('mostrar');
+            document.body.style.overflow = '';
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.getElementById('tarjetaModalContent').innerHTML = ''; // Limpia contenido
+            }, 300);
+        }
+
+        // Auto mostrar al cargar contenido HTMX
+        document.body.addEventListener('htmx:afterSwap', function (e) {
+            if (e.detail.target.id === 'tarjetaModalContent') {
+                abrirModal();
+            }
+        });
+
+        // Cerrar modal al hacer clic fuera
+        document.addEventListener('click', function (e) {
+            const modal = document.getElementById('tarjetaModal');
+            const contenido = document.getElementById('tarjetaModalContent');
+            if (modal && e.target === modal) {
+                cerrarModal();
+            }
+        });
+
+        // También cerrar con tecla ESC
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                cerrarModal();
+            }
+        });
+    </script>
+
 </body>
 
 </html>
