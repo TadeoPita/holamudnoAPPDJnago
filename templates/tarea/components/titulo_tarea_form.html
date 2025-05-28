@@ -1,0 +1,5 @@
+<form hx-post="{% url 'guardar_titulo_tarea' tarea.id %}"
+      hx-target="#tarea-card-{{ tarea.id }}"
+      hx-swap="outerHTML">
+    <input type="text" name="titulo" value="{{ tarea.titulo }}" class="form-control form-control-sm">
+</form>

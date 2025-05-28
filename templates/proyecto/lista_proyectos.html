@@ -2,7 +2,7 @@
 {% block title %}Mis Proyectos{% endblock %}
 
 {% block content %}
-<h2 class="mb-4 titulo ">Mis Proyectos</h2>
+<h2 class="mb-4 titulo text-white ">Mis Proyectos</h2>
 
 {% if request.user.is_staff %}
 <a href="{% url 'crear_proyecto' %}" class="btn btn-purple mb-4">+ Nuevo Proyecto</a>

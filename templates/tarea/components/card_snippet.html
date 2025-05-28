@@ -1,0 +1,7 @@
+<h3 class="tarjeta-titulo text-white mb-2"
+    hx-get="{% url 'editar_titulo_tarea' tarea.id %}"
+    hx-target="this"
+    hx-swap="outerHTML"
+    style="cursor: pointer;">
+  {{ tarea.titulo }}
+</h3>

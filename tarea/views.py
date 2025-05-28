@@ -1,3 +1,7 @@
+from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import csrf_exempt
+import json
+from .forms import AdjuntoForm
 from django.middleware.csrf import get_token
 from django.http import JsonResponse
 from .forms import ComentarioForm, ChecklistForm
@@ -35,7 +39,8 @@ def tarea_detalle_modal(request, id):
         tarea.checklist.all() if request.user.is_staff
         else tarea.checklist.filter(
             Q(asignado_a=request.user) |
-            (Q(asignado_a__isnull=True) & (Q(tarea__visible_para_todos=True) | Q(tarea__proyecto__usuarios_asignados=request.user)))
+            (Q(asignado_a__isnull=True) & (Q(tarea__visible_para_todos=True)
+             | Q(tarea__proyecto__usuarios_asignados=request.user)))
         ).distinct()
     )
 
@@ -69,16 +74,25 @@ def editar_tarea(request, id):
     if request.method == 'POST':
         form = TareaForm(request.POST, instance=tarea)
         if form.is_valid():
-           tarea = form.save(commit=False)
-           tarea.modificado_por = request.user
-           tarea.save()
-           form.save_m2m()  # << ESTA LÍNEA es la clave para asignado_a (ManyToMany)
-           return redirect('detalle_proyecto', proyecto_id=proyecto.id)
+            nueva_fecha = form.cleaned_data.get("fecha_vencimiento")
+            if not nueva_fecha:
+                form.cleaned_data["fecha_vencimiento"] = tarea.fecha_vencimiento
+            tarea = form.save(commit=False)
+            tarea.ultima_fecha_modificacion = timezone.now()
+            tarea.modificado_por = request.user
+            tarea.save()
+            form.save_m2m()
+            return redirect('detalle_proyecto', proyecto_id=proyecto.id)
+        else:
+            form.fields['columna'].queryset = proyecto.columnas.all()
     else:
         form = TareaForm(instance=tarea)
         form.fields['columna'].queryset = proyecto.columnas.all()
 
-    return render(request, 'tarea/editar_tarea.html', {'form': form, 'tarea': tarea})
+    return render(request, 'tarea/editar_tarea.html', {
+        'form': form,
+        'tarea': tarea
+    })
 
 # Eliminar tarea
 
@@ -101,7 +115,6 @@ def eliminar_tarea(request, id):
 @login_required
 def agregar_comentario(request, tarea_id):
     tarea = get_object_or_404(Tarea, id=tarea_id)
-
     if request.user not in tarea.proyecto.usuarios_asignados.all() and not tarea.visible_para_todos:
         return HttpResponseForbidden()
 
@@ -112,16 +125,16 @@ def agregar_comentario(request, tarea_id):
             comentario.tarea = tarea
             comentario.autor = request.user
             comentario.save()
-            html = render_to_string(
-                'tarea/components/comentario_item.html', {'comentario': comentario})
-            return HttpResponse(html)
+            return HttpResponse(
+                render_to_string(
+                    'tarea/components/comentario_item.html', {'comentario': comentario})
+            )
     return HttpResponse(status=400)
 
 
 @login_required
 def agregar_checklist(request, tarea_id):
     tarea = get_object_or_404(Tarea, id=tarea_id)
-
     if request.user not in tarea.proyecto.usuarios_asignados.all() and not tarea.visible_para_todos:
         return HttpResponseForbidden()
 
@@ -131,12 +144,12 @@ def agregar_checklist(request, tarea_id):
             item = form.save(commit=False)
             item.tarea = tarea
             item.creado_por = request.user
-            # Si no se seleccionó usuario, queda en None (público)
             item.asignado_a = form.cleaned_data.get('asignado_a')
             item.save()
-            html = render_to_string(
-                'tarea/components/checklist_item.html', {'item': item})
-            return HttpResponse(html)
+            return HttpResponse(
+                render_to_string(
+                    'tarea/components/checklist_item.html', {'item': item, 'request': request})
+            )
     return HttpResponse(status=400)
 
 
@@ -144,21 +157,17 @@ def agregar_checklist(request, tarea_id):
 def completar_checklist_item(request, item_id):
     item = get_object_or_404(ItemChecklist, id=item_id)
 
-    puede_completar = (
-        request.user.is_staff or
-        (item.asignado_a == request.user)
-    )
-
-    if not puede_completar:
-        return HttpResponseForbidden("No tenés permiso para completar este ítem")
+    if not (request.user.is_staff or item.asignado_a == request.user):
+        return HttpResponseForbidden()
 
     item.completado = not item.completado
     item.completado_fecha = timezone.now() if item.completado else None
     item.save()
 
-    html = render_to_string("tarea/components/checklist_item.html",
-                            {"item": item, "csrf_token": get_token(request)})
-    return HttpResponse(html)
+    return HttpResponse(
+        render_to_string('tarea/components/checklist_item.html',
+                         {'item': item, 'request': request})
+    )
 
 
 @login_required
@@ -175,17 +184,9 @@ def cambiar_color_columna(request, columna_id):
     return redirect('detalle_proyecto', proyecto_id=columna.proyecto.id)
 
 
-
-
-from .forms import AdjuntoForm
-
-from .forms import AdjuntoForm
-from django.template.loader import render_to_string
-
 @login_required
 def agregar_adjunto(request, tarea_id):
     tarea = get_object_or_404(Tarea, id=tarea_id)
-
     if request.user not in tarea.proyecto.usuarios_asignados.all() and not request.user.is_staff:
         return HttpResponseForbidden()
 
@@ -196,16 +197,14 @@ def agregar_adjunto(request, tarea_id):
             adjunto.tarea = tarea
             adjunto.creado_por = request.user
             adjunto.save()
-
-            html = render_to_string("tarea/components/adjunto_item.html", {"adj": adjunto})
-            return HttpResponse(html)
-        else:
-            return HttpResponse(f"<pre>{form.errors}</pre>", status=400)
+            return HttpResponse(
+                render_to_string(
+                    'tarea/components/adjunto_item.html', {'adj': adjunto})
+            )
+        return HttpResponse(f"<pre>{form.errors}</pre>", status=400)
 
     return HttpResponse(status=400)
 
-from django.views.decorators.csrf import csrf_exempt
-import json
 
 @csrf_exempt
 @login_required
@@ -227,6 +226,7 @@ def mover_tarea(request, tarea_id):
 
     return JsonResponse({"ok": True})
 
+
 @login_required
 def crear_columna(request, proyecto_id):
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
@@ -237,17 +237,58 @@ def crear_columna(request, proyecto_id):
         nombre = request.POST.get('nombre')
         color = request.POST.get('color') or '#ffffff'
         if nombre:
-            Columna.objects.create(nombre=nombre, color=color, proyecto=proyecto)
+            Columna.objects.create(
+                nombre=nombre, color=color, proyecto=proyecto)
     return redirect('detalle_proyecto', proyecto_id=proyecto.id)
-
 
 
 @login_required
 def eliminar_checklist_item(request, item_id):
     item = get_object_or_404(ItemChecklist, id=item_id)
+    tarea = item.tarea
 
     if not (request.user.is_staff or item.creado_por == request.user):
         return HttpResponseForbidden("No autorizado para eliminar este ítem")
 
     item.delete()
-    return HttpResponse(status=204)  # Solo elimina el nodo
+
+    checklist_visibles = (
+        tarea.checklist.all() if request.user.is_staff
+        else tarea.checklist.filter(
+            Q(asignado_a=request.user) |
+            (Q(asignado_a__isnull=True) & (Q(tarea__visible_para_todos=True)
+             | Q(tarea__proyecto__usuarios_asignados=request.user)))
+        ).distinct()
+    )
+
+    html = render_to_string("tarea/components/checklist_lista.html", {
+        'checklist': checklist_visibles,
+        'request': request
+    })
+
+    return HttpResponse(html)
+
+
+@require_POST
+@login_required
+def marcar_como_completada(request, tarea_id):
+    tarea = get_object_or_404(Tarea, id=tarea_id)
+
+    if request.user not in tarea.puede_marcar_como_completada.all() and not request.user.is_staff:
+        return HttpResponseForbidden("No tenés permiso para completar esta tarea.")
+
+    tarea.completada = True
+    tarea.completada_por = request.user
+    tarea.save()
+    return JsonResponse({"ok": True})
+
+
+@login_required
+def tarea_card_snippet(request, tarea_id):
+    tarea = get_object_or_404(Tarea, id=tarea_id)
+
+    # Seguridad: mostrar solo si es visible para el usuario
+    if not tarea.visible_para_todos and request.user not in tarea.proyecto.usuarios_asignados.all() and not request.user.is_staff:
+        return HttpResponseForbidden()
+
+    return render(request, "tarea/components/card_snippet.html", {"tarea": tarea})

@@ -11,11 +11,15 @@ from django.shortcuts import render
 from tarea.models import Tarea
 from django.utils import timezone
 from datetime import timedelta
+from django.db.models import Q
+
 
 @login_required
 def lista_proyectos(request):
-    proyectos = Proyecto.objects.filter(usuarios_asignados=request.user) | Proyecto.objects.filter(usuarios_asignados=None)
+    proyectos = Proyecto.objects.filter(
+        usuarios_asignados=request.user) | Proyecto.objects.filter(usuarios_asignados=None)
     return render(request, 'proyecto/lista_proyectos.html', {'proyectos': proyectos})
+
 
 @login_required
 def crear_proyecto(request):
@@ -27,6 +31,7 @@ def crear_proyecto(request):
     else:
         form = ProyectoForm()
     return render(request, 'proyecto/crear_proyecto.html', {'form': form})
+
 
 @login_required
 def detalle_proyecto(request, proyecto_id):
@@ -40,6 +45,7 @@ def detalle_proyecto(request, proyecto_id):
         'proyecto': proyecto,
         'columnas': columnas
     })
+
 
 @login_required
 def crear_tarea(request, proyecto_id):
@@ -67,8 +73,6 @@ def crear_tarea(request, proyecto_id):
     })
 
 
-
-
 @login_required
 def editar_proyecto(request, id):
     proyecto = get_object_or_404(Proyecto, id=id)
@@ -88,7 +92,8 @@ def editar_proyecto(request, id):
         'form': form,
         'proyecto': proyecto
     })
-    
+
+
 @login_required
 def eliminar_proyecto(request, id):
     proyecto = get_object_or_404(Proyecto, id=id)
@@ -108,22 +113,33 @@ def eliminar_proyecto(request, id):
 @login_required
 def inicio(request):
     hoy = timezone.now().date()
-    tareas_proximas = Tarea.objects.filter(
-        fecha_vencimiento__gte=hoy,
-        fecha_vencimiento__lte=hoy + timedelta(days=7),
-        completada=False
-    ).filter(
-        asignado_a=request.user
-    ) | Tarea.objects.filter(
-        visible_para_todos=True,
-        completada=False
-    )
 
-    tareas_completadas = Tarea.objects.filter(
-        completada=True
-    ).order_by('-fecha_vencimiento')[:5]
+    if request.user.is_staff:
+        tareas_proximas = Tarea.objects.filter(
+            completada=False,
+            fecha_vencimiento__gte=hoy
+        ).order_by('fecha_vencimiento')
+
+        tareas_completadas = Tarea.objects.filter(
+            completada=True
+        ).order_by('-fecha_vencimiento')[:5]
+    else:
+        tareas_proximas = Tarea.objects.filter(
+            completada=False,
+            fecha_vencimiento__gte=hoy
+        ).filter(
+            Q(visible_para_todos=True) |
+            Q(asignado_a=request.user)
+        ).distinct().order_by('fecha_vencimiento')
+
+        tareas_completadas = Tarea.objects.filter(
+            completada=True
+        ).filter(
+            Q(visible_para_todos=True) |
+            Q(asignado_a=request.user)
+        ).distinct().order_by('-fecha_vencimiento')[:5]
 
     return render(request, 'inicio.html', {
-        'tareas_proximas': tareas_proximas.distinct(),
+        'tareas_proximas': tareas_proximas,
         'tareas_completadas': tareas_completadas,
     })

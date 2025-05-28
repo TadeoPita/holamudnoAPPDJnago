@@ -1,0 +1,5 @@
+{% for item in checklist %}
+  {% include 'tarea/components/checklist_item.html' %}
+{% empty %}
+  <li id="checklist-empty" class="list-group-item text-muted">Sin ítems</li>
+{% endfor %}

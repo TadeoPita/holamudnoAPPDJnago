@@ -1,0 +1,359 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mi Calendario{% endblock %}
+
+{% block extrahead %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
+<style>
+  #calendar {
+    background: white;
+    color: black;
+    padding: 1rem;
+    border-radius: 10px;
+    min-height: 600px;
+  }
+
+  #external-event-form {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .fc-event {
+    margin: 5px 0;
+    padding: 5px 10px;
+    background-color: #6c63ff;
+    color: white;
+    border-radius: 5px;
+    cursor: grab;
+  }
+
+  .fc {
+    font-size: 0.9rem;
+  }
+
+  .toast-container {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 2000;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">📅 Mi Calendario</h2>
+
+<div class="row">
+  <div class="col-md-3">
+    <div id="external-event-form">
+      <strong>➕ Crear Evento Rápido</strong>
+      <form id="formEventoRapido" class="mt-2">
+        <div class="mb-2">
+          <input type="text" class="form-control" id="quickTitle" placeholder="Título" required>
+        </div>
+        <div class="mb-2">
+          <input type="color" class="form-control form-control-color" id="quickColor" value="#6c63ff">
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm w-100">Crear</button>
+      </form>
+      {% if request.user.is_staff %}
+      <hr>
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="toggleTareas" checked>
+        <label class="form-check-label" for="toggleTareas">Mostrar tareas</label>
+      </div>
+      {% endif %}
+      <hr>
+      <div id="external-events" class="mt-2"></div>
+    </div>
+  </div>
+
+  <div class="col-md-9">
+    <div id="calendar"></div>
+  </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="eventoModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <form id="formNuevoEvento" class="modal-content">
+      {% csrf_token %}
+      <input type="hidden" name="evento_id" id="inputEventoID">
+      <div class="modal-header">
+        <h5 class="modal-title">Evento</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" name="fecha_inicio" id="inputFechaInicio">
+        <input type="hidden" name="fecha_fin" id="inputFechaFin">
+        <div class="mb-3">
+          <label for="inputTitulo" class="form-label">Título</label>
+          <input type="text" class="form-control" id="inputTitulo" name="titulo" required>
+        </div>
+        <div class="mb-3">
+          <label for="inputDescripcion" class="form-label">Descripción</label>
+          <textarea class="form-control" id="inputDescripcion" name="descripcion"></textarea>
+        </div>
+        <div class="mb-3">
+          <label for="inputColor" class="form-label">Color</label>
+          <input type="color" class="form-control form-control-color" id="inputColor" name="color" value="#70C1B3">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-purple">Guardar</button>
+        <button type="button" id="btnEliminarEvento" class="btn btn-danger d-none">Eliminar</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast-container" id="toast-container"></div>
+{% endblock %}
+{% block extrajs %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@fullcalendar/interaction@6.1.8/index.global.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const calendarEl = document.getElementById('calendar');
+    const externalEventsEl = document.getElementById('external-events');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    // Inicializar Draggable SOLO UNA VEZ
+    new FullCalendar.Draggable(externalEventsEl, {
+      itemSelector: '.fc-event',
+      eventData: function (el) {
+        return {
+          title: el.getAttribute('data-title'),
+          color: el.getAttribute('data-color') || '#6c63ff'
+        };
+      }
+    });
+    const eventosRapidos = [
+      { title: 'Reunión', color: '#ff9900' },
+      { title: 'Llamar cliente', color: '#33cc33' }
+    ];
+
+    eventosRapidos.forEach(ev => {
+      const el = document.createElement('div');
+      el.className = 'fc-event';
+      el.setAttribute('data-title', ev.title);
+      el.setAttribute('data-color', ev.color);
+      el.textContent = ev.title;
+      externalEventsEl.appendChild(el);
+    });
+
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      locale: 'es',
+      selectable: true,
+      editable: true,
+      droppable: true,
+      selectMirror: true,
+      eventDurationEditable: true,
+      eventResizableFromStart: true,
+
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      },
+
+      select: function (info) {
+        document.getElementById('formNuevoEvento').reset();
+        document.getElementById('inputEventoID').value = '';
+        document.getElementById('inputFechaInicio').value = info.startStr;
+        document.getElementById('inputFechaFin').value = info.endStr || info.startStr;
+        document.getElementById('btnEliminarEvento').classList.add('d-none');
+        new bootstrap.Modal(document.getElementById('eventoModal')).show();
+      },
+
+      drop: function (info) {
+        const el = info.draggedEl;
+        const title = el.getAttribute('data-title');
+        const color = el.getAttribute('data-color');
+
+        fetch("{% url 'crear_evento_personal' %}", {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': csrfToken,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: new URLSearchParams({
+            titulo: title,
+            descripcion: 'Evento rápido',
+            fecha_inicio: info.dateStr,
+            fecha_fin: info.dateStr,  // esto se actualizará si se redimensiona
+            color: color
+          })
+        }).then(res => res.json()).then(data => {
+          if (data.ok) {
+            calendar.refetchEvents();
+            toast("📌 Evento agregado");
+          } else {
+            toast("❌ Error al crear evento", true);
+          }
+        });
+      },
+
+      eventClick: function (info) {
+        const e = info.event;
+        document.getElementById('inputEventoID').value = e.id;
+        document.getElementById('inputTitulo').value = e.title;
+        document.getElementById('inputDescripcion').value = e.extendedProps.descripcion || '';
+        document.getElementById('inputColor').value = e.backgroundColor;
+        document.getElementById('inputFechaInicio').value = e.startStr;
+        document.getElementById('inputFechaFin').value = e.endStr || e.startStr;
+        document.getElementById('btnEliminarEvento').classList.remove('d-none');
+        new bootstrap.Modal(document.getElementById('eventoModal')).show();
+      },
+
+      eventDidMount: function (info) {
+        new bootstrap.Tooltip(info.el, {
+          title: `${info.event.title}\n${info.event.extendedProps.descripcion || ''}`,
+          placement: 'top',
+          trigger: 'hover',
+          container: 'body'
+        });
+      },
+
+      eventDrop: info => confirmarCambio(info),
+      eventResize: info => confirmarCambio(info),
+
+      eventSources: [
+        {
+          id: 'tareas',
+          url: '{% url "eventos_tareas_json" %}',
+          color: '#66c7ff',
+          textColor: 'white'
+        },
+        {
+          id: 'personales',
+          url: '{% url "eventos_personales_json" %}',
+          color: '#70C1B3',
+          textColor: 'white'
+        }
+      ]
+    });
+
+    calendar.render();
+
+    // Guardar evento nuevo o edición
+    document.getElementById('formNuevoEvento').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const formData = new FormData(this);
+      const eventoId = formData.get('evento_id');
+      const url = eventoId
+        ? `/calendario/eventos/${eventoId}/actualizar/`
+        : "{% url 'crear_evento_personal' %}";
+
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken
+        },
+        body: formData
+      }).then(res => res.json()).then(data => {
+        if (data.ok) {
+          calendar.refetchEvents();
+          bootstrap.Modal.getInstance(document.getElementById('eventoModal')).hide();
+          toast("✅ Evento guardado");
+        } else {
+          toast("❌ Error al guardar evento", true);
+        }
+      });
+    });
+
+    // Eliminar evento
+    document.getElementById('btnEliminarEvento').addEventListener('click', function () {
+      const eventoId = document.getElementById('inputEventoID').value;
+      fetch(`/calendario/eventos/${eventoId}/eliminar/`, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken
+        }
+      }).then(res => res.json()).then(data => {
+        if (data.ok) {
+          calendar.refetchEvents();
+          bootstrap.Modal.getInstance(document.getElementById('eventoModal')).hide();
+          toast("🗑 Evento eliminado");
+        } else {
+          toast("❌ Error al eliminar", true);
+        }
+      });
+    });
+
+    // Crear nuevo evento rápido
+    document.getElementById('formEventoRapido').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const title = document.getElementById('quickTitle').value;
+      const color = document.getElementById('quickColor').value;
+      const el = document.createElement('div');
+      el.className = 'fc-event';
+      el.setAttribute('data-title', title);
+      el.setAttribute('data-color', color);
+      el.textContent = title;
+      externalEventsEl.appendChild(el);
+      toast("✅ Evento rápido creado");
+      this.reset();
+    });
+
+    // Toggle tareas
+    const toggleTareas = document.getElementById('toggleTareas');
+    if (toggleTareas) {
+      toggleTareas.addEventListener('change', function () {
+        const source = calendar.getEventSourceById('tareas');
+        if (this.checked) {
+          calendar.addEventSource({
+            id: 'tareas',
+            url: '{% url "eventos_tareas_json" %}',
+            color: '#66c7ff',
+            textColor: 'white'
+          });
+        } else {
+          source.remove();
+        }
+      });
+    }
+
+    // Confirmar arrastre o redimensión
+    function confirmarCambio(info) {
+      if (confirm(`¿Confirmar cambio en "${info.event.title}"?`)) {
+        fetch(`/calendario/eventos/${info.event.id}/actualizar/`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+          },
+          body: JSON.stringify({
+            start: info.event.startStr,
+            end: info.event.endStr || info.event.startStr
+          })
+        }).then(res => res.json()).then(data => {
+          if (!data.ok) toast("❌ Error al actualizar", true);
+        });
+      } else {
+        info.revert();
+      }
+    }
+
+    function toast(message, danger = false) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast align-items-center text-white ${danger ? 'bg-danger' : 'bg-success'} show`;
+      toast.innerHTML = `
+      <div class="d-flex">
+        <div class="toast-body">${message}</div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+      </div>`;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+  });
+</script>
+{% endblock %}

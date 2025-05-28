@@ -57,7 +57,7 @@ ROOT_URLCONF = 'taskadmin.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -130,3 +130,6 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 TEMPLATES[0]['DIRS'] = [BASE_DIR / 'templates']
+
+LOGIN_REDIRECT_URL = 'lista_proyectos'  # o donde quieras ir al loguearte
+LOGOUT_REDIRECT_URL = 'login'

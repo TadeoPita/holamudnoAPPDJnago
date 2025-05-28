@@ -22,14 +22,21 @@
         {{ form.fecha_vencimiento }}
 
         <div class="form-check my-2">
-            {{ form.visible_para_todos }} 
+            {{ form.visible_para_todos }}
             <label class="form-check-label" for="{{ form.visible_para_todos.id_for_label }}">
                 Visible para todos
             </label>
         </div>
 
         <div class="form-check my-2">
-            {{ form.completada }} 
+            <label for="{{form.puede_marcar_como_completada.id_for_label}}"><strong>Puede marcar como completada:</strong></label>
+            <br>
+            {{ form.puede_marcar_como_completada }}
+            
+        </div>
+
+        <div class="form-check my-2">
+            {{ form.completada }}
             <label class="form-check-label" for="{{ form.completada.id_for_label }}">
                 ¿Completada?
             </label>

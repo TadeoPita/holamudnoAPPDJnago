@@ -2,13 +2,18 @@
 {% block title %}Proyecto: {{ proyecto.nombre }}{% endblock %}
 
 {% block content %}
-<h2 class="titulo">{{ proyecto.nombre }}</h2>
+<h2 class="titulo text-white">{{ proyecto.nombre }}</h2>
+
+
+{% if request.user.is_staff %}
+
 
 
 <div class="d-flex flex-wrap align-items-center gap-2 mb-5">
     <a href="{% url 'crear_tarea' proyecto.id %}" class="btn btn-purple">+ Nueva Tarea</a>
+    {% endif %}
     <a href="{% url 'lista_proyectos' %}" class="btn btn-dark">← Volver</a>
-
+    <br>
     {% if request.user.is_staff %}
     <form method="post" action="{% url 'crear_columna' proyecto.id %}"
         class="d-flex align-items-center gap-2 form-crear-columna ms-auto">
@@ -27,14 +32,16 @@
 <div class="d-flex flex-wrap gap-4">
     {% for columna in columnas %}
     <div class="glass-card" style="width: 300px;" ondragover="event.preventDefault();"
-        ondrop="handleDrop(event, '{{ columna.id }}')">
+        ondrop="handleDrop(event, '{{ columna.id }}') ">
         <!-- 🎨 Línea de color al lado del título -->
         <div class="d-flex align-items-center justify-content-between mb-2">
             <div class="d-flex align-items-center">
                 <div
                     style="width: 6px; height: 24px; background-color: {{ columna.color }}; border-radius: 3px; margin-right: 8px;">
                 </div>
+
                 <h5 class="m-0" style="color: {{ columna.color }}">{{ columna.nombre }}</h5>
+
             </div>
 
             {% if request.user.is_staff %}
@@ -47,7 +54,8 @@
                 <button type="submit" class="btn btn-sm btn-purple">🎨</button>
             </form>
             {% endif %}
-        </div>
+        </div><span class="badge bg-secondary">{{ columna.tareas.count }}</span>
+
 
         {% for tarea in columna.tareas.all %}
         {% if tarea.visible_para_todos or request.user in tarea.asignado_a.all or request.user.is_staff %}
@@ -70,6 +78,7 @@
 
             <!-- Título de la tarea -->
             <h3 class="tarjeta-titulo text-white mb-2">{{ tarea.titulo }}</h3>
+
 
             <!-- Meta info: fecha, comentarios, adjuntos, checklist -->
             <div class="tarjeta-meta mb-2">
