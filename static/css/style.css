@@ -1014,3 +1014,61 @@ input.form-control, select.form-control {
       border-radius: 5px;
       cursor: grab;
     }
+    .badge.rounded-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4em 0.8em;
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1;
+  color: #fff;
+  text-align: center;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.badge.rounded-pill.etiqueta {
+  background-color: #6c63ff;
+}
+
+
+
+@media (max-width: 768px) {
+  .row.align-items-center > .col-md-auto {
+    width: 100%;
+    margin-top: 0.5rem;
+  }
+
+  .form-control-sm {
+    font-size: 0.875rem;
+  }
+
+  .btn-sm {
+    font-size: 0.85rem;
+  }
+
+  .form-control-color {
+    width: 40px !important;
+    height: 36px !important;
+  }
+}
+
+.dropdown-menu-dark {
+  background-color: #1e1e2f;
+  border: 1px solid #444;
+}
+.dropdown-menu-dark .dropdown-item:hover {
+  background-color: #2b2b3d;
+  color: #fff;
+}
+
+.fade-in {
+  opacity: 0;
+  animation: fadeIn 0.7s forwards ease-in;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}

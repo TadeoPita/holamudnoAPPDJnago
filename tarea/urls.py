@@ -6,9 +6,9 @@ from tarea.forms import marcar_como_completada
 from .views import (
     cambiar_color_columna,
     crear_columna,
+    crear_etiqueta,
     eliminar_checklist_item,
     mover_tarea,
-    tarea_card_snippet,
     tarea_detalle_modal,
     lista_tareas_usuario,
     editar_tarea,
@@ -45,6 +45,6 @@ urlpatterns = [
 
     path('tarea/<int:tarea_id>/completar/',
          marcar_como_completada, name='marcar_como_completada'),
-     path('tarea/<int:tarea_id>/card_snippet/', tarea_card_snippet, name='tarea_card_snippet'),
 
+     path('etiqueta/crear/', crear_etiqueta, name='crear_etiqueta'),
 ]

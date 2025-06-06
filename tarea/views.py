@@ -10,7 +10,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 
 from calendario import models
-from .models import Tarea, Columna, Comentario, ItemChecklist, Adjunto
+from .models import Etiqueta, Tarea, Columna, Comentario, ItemChecklist, Adjunto
 from proyecto.models import Proyecto
 from .forms import TareaForm
 from django.http import HttpResponseForbidden
@@ -269,26 +269,33 @@ def eliminar_checklist_item(request, item_id):
     return HttpResponse(html)
 
 
-@require_POST
 @login_required
 def marcar_como_completada(request, tarea_id):
     tarea = get_object_or_404(Tarea, id=tarea_id)
 
     if request.user not in tarea.puede_marcar_como_completada.all() and not request.user.is_staff:
-        return HttpResponseForbidden("No tenés permiso para completar esta tarea.")
+        return HttpResponseForbidden("No autorizado")
 
     tarea.completada = True
     tarea.completada_por = request.user
     tarea.save()
-    return JsonResponse({"ok": True})
+
+    return render(request, "tarea/modals/tarea_detalle.html", {
+        "tarea": tarea,
+        "comentarios": tarea.comentarios.all(),
+        "checklist": tarea.checklist.all(),
+        "comentario_form": ComentarioForm(),
+        "checklist_form": ChecklistForm(),
+        "adjunto_form": AdjuntoForm(),
+        "user": request.user,
+    })
 
 
+@require_POST
 @login_required
-def tarea_card_snippet(request, tarea_id):
-    tarea = get_object_or_404(Tarea, id=tarea_id)
-
-    # Seguridad: mostrar solo si es visible para el usuario
-    if not tarea.visible_para_todos and request.user not in tarea.proyecto.usuarios_asignados.all() and not request.user.is_staff:
-        return HttpResponseForbidden()
-
-    return render(request, "tarea/components/card_snippet.html", {"tarea": tarea})
+def crear_etiqueta(request):
+    nombre = request.POST.get('nombre')
+    color = request.POST.get('color') or "#FFD700"
+    if nombre:
+        Etiqueta.objects.create(nombre=nombre, color=color)
+    return redirect('detalle_proyecto', proyecto_id=request.session.get('proyecto_actual_id'))

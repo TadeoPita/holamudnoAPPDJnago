@@ -2,6 +2,16 @@ from django.db import models
 from django.contrib.auth.models import User
 from proyecto.models import Proyecto
 
+# tarea/models.py
+class Etiqueta(models.Model):
+    nombre = models.CharField(max_length=50)
+    color = models.CharField(max_length=7, default="#FFD700")  # amarillo por default
+
+    def __str__(self):
+        return self.nombre
+
+
+
 class Columna(models.Model):
     nombre = models.CharField(max_length=100)
     color = models.CharField(max_length=7)
@@ -30,6 +40,7 @@ class Tarea(models.Model):
     proyecto = models.ForeignKey(Proyecto, on_delete=models.CASCADE, related_name='tareas')
     asignado_a = models.ManyToManyField(User, related_name='tareas_asignadas')
     modificado_por = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='tareas_modificadas')
+    etiquetas = models.ManyToManyField(Etiqueta, blank=True, related_name='tareas')
 
     def __str__(self):
         return self.titulo
@@ -56,11 +67,17 @@ class Comentario(models.Model):
         return f"{self.autor} - {self.texto[:30]}..."
 
 class Adjunto(models.Model):
-    tarea = models.ForeignKey('Tarea', on_delete=models.CASCADE, related_name='adjuntos')
     archivo = models.FileField(upload_to='adjuntos/', blank=True, null=True)
     url = models.URLField(blank=True, null=True)
+    tarea = models.ForeignKey('Tarea', on_delete=models.CASCADE, related_name='adjuntos')
+    creado_por = models.ForeignKey('auth.User', on_delete=models.CASCADE)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
-    creado_por = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.archivo.name if self.archivo else self.url
+        if self.archivo:
+            return f"Archivo: {self.archivo.name}"
+        elif self.url:
+            return f"URL: {self.url}"
+        return "Adjunto sin archivo ni URL"
+    
+    

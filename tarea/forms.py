@@ -16,7 +16,7 @@ class TareaForm(forms.ModelForm):
         model = Tarea
         fields = [
             'visible_para_todos', 'titulo', 'descripcion', 'prioridad',
-            'fecha_vencimiento', 'completada', 'columna', 'asignado_a','puede_marcar_como_completada'
+            'fecha_vencimiento', 'completada', 'columna', 'asignado_a','puede_marcar_como_completada','etiquetas' 
         ]
         widgets = {
             'titulo': forms.TextInput(attrs={'class': 'form-control'}),
@@ -27,6 +27,7 @@ class TareaForm(forms.ModelForm):
             'asignado_a': forms.SelectMultiple(attrs={'class': 'form-control'}),
             'visible_para_todos': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'completada': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'etiquetas': forms.SelectMultiple(attrs={'class': 'form-control'}) ,
         }
 
 

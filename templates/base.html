@@ -11,7 +11,7 @@
     <!-- Font Awesome 6 CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         crossorigin="anonymous">
-    {% block extrahead %} 
+    {% block extrahead %}
 
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
@@ -441,6 +441,24 @@
             color: white !important;
             border: 1px solid #333 !important;
         }
+
+        .badge.rounded-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.4em 0.8em;
+            font-size: 0.85rem;
+            font-weight: 500;
+            line-height: 1;
+            color: #fff;
+            text-align: center;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        .badge.rounded-pill.etiqueta {
+            background-color: #6c63ff;
+        }
     </style>
 
 </head>
@@ -486,7 +504,7 @@
         </div>
     </div>
 
- {% block extrajs %}
+    {% block extrajs %}
     <!-- Toggle JS -->
     <script>
         function abrirModal() {
@@ -531,7 +549,7 @@
             }
         });
     </script>
-{% endblock %}
+    {% endblock %}
 </body>
 
 </html>

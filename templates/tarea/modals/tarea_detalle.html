@@ -17,12 +17,20 @@
         </div>
 
         <!-- Metadatos -->
+
         <div class="modal-metadatos">
           <div class="modal-etiquetas">
             <span class="etiqueta-titulo">Etiquetas</span>
             <div class="etiquetas-lista">
               <span class="etiqueta-pill bg-success bg-gradient">Proyecto: {{ tarea.proyecto.nombre }}</span>
               <span class="etiqueta-pill bg-dark bg-gradient">Columna: {{ tarea.columna.nombre }}</span>
+              {% for etiqueta in tarea.etiquetas.all %}
+              <span class="badge rounded-pill" style="background-color: {{ etiqueta.color }};">
+                {{ etiqueta.nombre }}
+              </span>
+              {% empty %}
+              <span class="text-muted">Sin etiquetas</span>
+              {% endfor %}
             </div>
           </div>
 
@@ -30,11 +38,11 @@
             <span class="miembros-titulo">Asignado a</span>
             <div class="miembros-lista">
               {% for u in tarea.asignado_a.all %}
-                <div class="miembro-avatar" title="{{ u.get_full_name|default:u.username }}">
-                  {{ u.first_name|default:u.username|slice:":1" }}{{ u.last_name|slice:":1" }}
-                </div>
+              <div class="miembro-avatar" title="{{ u.get_full_name|default:u.username }}">
+                {{ u.first_name|default:u.username|slice:":1" }}{{ u.last_name|slice:":1" }}
+              </div>
               {% empty %}
-                <span class="text-white">No asignado</span>
+              <span class="text-white">No asignado</span>
               {% endfor %}
             </div>
           </div>
@@ -51,19 +59,20 @@
         {% if user in tarea.puede_marcar_como_completada.all or user.is_staff %}
         <div class="text-end my-3">
           {% if not tarea.completada %}
-          <button class="btn btn-success"
-            hx-post="{% url 'marcar_como_completada' tarea.id %}"
-            hx-target="#tarjetaModalContent"
-            hx-swap="innerHTML"
-            hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-            hx-on::afterRequest="htmx.ajax('GET', '/tarea/{{ tarea.id }}/card_snippet/', '#tarea-card-{{ tarea.id }}')">
+          <button class="btn btn-success" hx-post="{% url 'marcar_como_completada' tarea.id %}"
+            hx-target="#tarjetaModalContent" hx-swap="innerHTML" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
             ✅ Marcar como completada
           </button>
+
+
           {% else %}
-          <span class="text-success">✅ Tarea ya completada por {{ tarea.completada_por.get_full_name|default:tarea.completada_por.username }}</span>
+          <span class="text-success fade-in" id="completada-msg">
+            ✅ Tarea ya completada por {{ tarea.completada_por.get_full_name|default:tarea.completada_por.username }}
+          </span>
           {% endif %}
         </div>
         {% endif %}
+
 
         <!-- Descripción -->
         <div class="modal-seccion">
@@ -85,14 +94,12 @@
             </div>
           </div>
           <ul class="list-group mb-3" id="checklist-list">
-  {% include 'tarea/components/checklist_lista.html' with checklist=checklist %}
-</ul>
+            {% include 'tarea/components/checklist_lista.html' with checklist=checklist %}
+          </ul>
 
           {% if request.user in tarea.proyecto.usuarios_asignados.all %}
-          <form hx-post="{% url 'agregar_checklist' tarea.id %}"
-                hx-target="#checklist-list"
-                hx-swap="beforeend"
-                hx-on::afterRequest="htmx.ajax('GET', '/tarea/{{ tarea.id }}/card_snippet/', '#tarea-card-{{ tarea.id }}'); checkEmptyList('#checklist-list', 'checklist-empty');">
+          <form hx-post="{% url 'agregar_checklist' tarea.id %}" hx-target="#checklist-list" hx-swap="beforeend"
+            hx-on::afterRequest="htmx.ajax('GET', '/tarea/{{ tarea.id }}/card_snippet/', '#tarea-card-{{ tarea.id }}'); checkEmptyList('#checklist-list', 'checklist-empty');">
             {% csrf_token %}
             <div class="mb-2">{{ checklist_form.descripcion }}</div>
             <div class="mb-2">{{ checklist_form.asignado_a }}</div>
@@ -108,23 +115,23 @@
             <h3>Comentarios</h3>
           </div>
           <ul class="list-group mb-3" id="comentarios-list">
-            <li class="list-group-item text-muted" id="comentarios-empty" {% if comentarios %}style="display:none;"{% endif %}>
+            <li class="list-group-item text-muted" id="comentarios-empty" {% if comentarios %}style="display:none;" {%
+              endif %}>
               Sin comentarios aún.
             </li>
             {% for comentario in comentarios %}
-              {% include 'tarea/components/comentario_item.html' %}
+            {% include 'tarea/components/comentario_item.html' %}
             {% endfor %}
           </ul>
           {% if request.user in tarea.proyecto.usuarios_asignados.all %}
-          <form hx-post="{% url 'agregar_comentario' tarea.id %}"
-                hx-target="#comentarios-list"
-                hx-swap="beforeend"
-                hx-on::afterRequest="htmx.ajax('GET', '/tarea/{{ tarea.id }}/card_snippet/', '#tarea-card-{{ tarea.id }}'); checkEmptyList('#comentarios-list', 'comentarios-empty');">
+          <form hx-post="{% url 'agregar_comentario' tarea.id %}" hx-target="#comentarios-list" hx-swap="beforeend"
+            hx-on::afterRequest="htmx.ajax('GET', '/tarea/{{ tarea.id }}/card_snippet/', '#tarea-card-{{ tarea.id }}'); checkEmptyList('#comentarios-list', 'comentarios-empty');">
             {% csrf_token %}
             {{ comentario_form.texto }}
             <button type="submit" class="btn btn-purple mt-2">Comentar</button>
           </form>
           {% endif %}
+          
         </div>
 
         <!-- Adjuntos -->
@@ -136,21 +143,19 @@
             </div>
           </div>
           <ul class="list-group mb-3" id="adjuntos-list">
-            <li class="list-group-item text-muted" id="adjuntos-empty"
-              {% if tarea.adjuntos.all|length > 0 %}style="display:none;"{% endif %}>
+            <li class="list-group-item text-muted" id="adjuntos-empty" {% if tarea.adjuntos.all|length> 0
+              %}style="display:none;"{% endif %}>
               Sin adjuntos
             </li>
             {% for adj in tarea.adjuntos.all %}
-              {% include 'tarea/components/adjunto_item.html' with adj=adj %}
+            {% include 'tarea/components/adjunto_item.html' with adj=adj %}
             {% endfor %}
           </ul>
           {% if request.user in tarea.proyecto.usuarios_asignados.all or request.user.is_staff %}
-          <form hx-post="{% url 'agregar_adjunto' tarea.id %}"
-                hx-encoding="multipart/form-data"
-                hx-target="#adjuntos-list"
-                hx-swap="beforeend"
-                hx-on::afterRequest="htmx.ajax('GET', '/tarea/{{ tarea.id }}/card_snippet/', '#tarea-card-{{ tarea.id }}'); checkEmptyList('#adjuntos-list', 'adjuntos-empty');"
-                enctype="multipart/form-data" method="POST" class="adjunto-form mt-2">
+          <form hx-post="{% url 'agregar_adjunto' tarea.id %}" hx-encoding="multipart/form-data"
+            hx-target="#adjuntos-list" hx-swap="beforeend"
+            hx-on::afterRequest="htmx.ajax('GET', '/tarea/{{ tarea.id }}/card_snippet/', '#tarea-card-{{ tarea.id }}'); checkEmptyList('#adjuntos-list', 'adjuntos-empty');"
+            enctype="multipart/form-data" method="POST" class="adjunto-form mt-2">
             {% csrf_token %}
             <div class="mb-2">{{ adjunto_form.archivo.label_tag }}{{ adjunto_form.archivo }}</div>
             <div class="mb-2">{{ adjunto_form.url.label_tag }}{{ adjunto_form.url }}</div>
