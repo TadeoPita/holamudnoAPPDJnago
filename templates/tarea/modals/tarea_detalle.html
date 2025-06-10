@@ -17,7 +17,6 @@
         </div>
 
         <!-- Metadatos -->
-
         <div class="modal-metadatos">
           <div class="modal-etiquetas">
             <span class="etiqueta-titulo">Etiquetas</span>
@@ -63,8 +62,6 @@
             hx-target="#tarjetaModalContent" hx-swap="innerHTML" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
             ✅ Marcar como completada
           </button>
-
-
           {% else %}
           <span class="text-success fade-in" id="completada-msg">
             ✅ Tarea ya completada por {{ tarea.completada_por.get_full_name|default:tarea.completada_por.username }}
@@ -72,7 +69,6 @@
           {% endif %}
         </div>
         {% endif %}
-
 
         <!-- Descripción -->
         <div class="modal-seccion">
@@ -115,23 +111,30 @@
             <h3>Comentarios</h3>
           </div>
           <ul class="list-group mb-3" id="comentarios-list">
-            <li class="list-group-item text-muted" id="comentarios-empty" {% if comentarios %}style="display:none;" {%
-              endif %}>
+            <li class="list-group-item text-muted" id="comentarios-empty" {% if comentarios %}style="display:none;"{% endif %}>
               Sin comentarios aún.
             </li>
             {% for comentario in comentarios %}
-            {% include 'tarea/components/comentario_item.html' %}
+              {% include 'tarea/components/comentario_item.html' %}
             {% endfor %}
           </ul>
           {% if request.user in tarea.proyecto.usuarios_asignados.all %}
           <form hx-post="{% url 'agregar_comentario' tarea.id %}" hx-target="#comentarios-list" hx-swap="beforeend"
-            hx-on::afterRequest="htmx.ajax('GET', '/tarea/{{ tarea.id }}/card_snippet/', '#tarea-card-{{ tarea.id }}'); checkEmptyList('#comentarios-list', 'comentarios-empty');">
+            hx-on::afterRequest="htmx.ajax('GET', '/tarea/{{ tarea.id }}/card_snippet/', '#tarea-card-{{ tarea.id }}'); checkEmptyList('#comentarios-list', 'comentarios-empty');"
+            class="comentario-form mt-3">
             {% csrf_token %}
-            {{ comentario_form.texto }}
-            <button type="submit" class="btn btn-purple mt-2">Comentar</button>
+            <div class="form-group mb-2">
+              <textarea name="texto" 
+                        class="form-control comentario-textarea" 
+                        rows="3" 
+                        placeholder="Escribe tu comentario..."
+                        required></textarea>
+            </div>
+            <button type="submit" class="btn btn-purple">
+              <i class="fa-solid fa-paper-plane"></i> Comentar
+            </button>
           </form>
           {% endif %}
-          
         </div>
 
         <!-- Adjuntos -->
@@ -143,12 +146,11 @@
             </div>
           </div>
           <ul class="list-group mb-3" id="adjuntos-list">
-            <li class="list-group-item text-muted" id="adjuntos-empty" {% if tarea.adjuntos.all|length> 0
-              %}style="display:none;"{% endif %}>
+            <li class="list-group-item text-muted" id="adjuntos-empty" {% if tarea.adjuntos.all|length > 0 %}style="display:none;"{% endif %}>
               Sin adjuntos
             </li>
             {% for adj in tarea.adjuntos.all %}
-            {% include 'tarea/components/adjunto_item.html' with adj=adj %}
+              {% include 'tarea/components/adjunto_item.html' with adj=adj %}
             {% endfor %}
           </ul>
           {% if request.user in tarea.proyecto.usuarios_asignados.all or request.user.is_staff %}
