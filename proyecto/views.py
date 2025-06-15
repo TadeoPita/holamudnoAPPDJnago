@@ -1,6 +1,9 @@
 # proyecto/views.py
+from urllib import request
 from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
+
+from calendario import models
 from .models import  Proyecto
 from .forms import ProyectoForm
 from tarea.forms import TareaForm  # ✅ Así está bien
@@ -141,40 +144,97 @@ def eliminar_proyecto(request, id):
         'proyecto': proyecto
     })
 
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from django.utils import timezone
+from datetime import timedelta, date
+from django.db.models import Count, Q
+from tarea.models import Tarea
+from proyecto.models import Proyecto
+from calendario.models import EventoPersonal
 
-@login_required
 def inicio(request):
+    user = request.user
     hoy = timezone.now().date()
+    semana = hoy + timedelta(days=7)
 
-    if request.user.is_staff:
-        tareas_proximas = Tarea.objects.filter(
-            completada=False,
-            fecha_vencimiento__gte=hoy
-        ).order_by('fecha_vencimiento')
+    # Obtener todas las tareas
+    tareas = Tarea.objects.select_related("proyecto", "columna") \
+                          .prefetch_related("etiquetas", "asignado_a") \
+                          .all()
 
-        tareas_completadas = Tarea.objects.filter(
-            completada=True
-        ).order_by('-fecha_vencimiento')[:5]
-    else:
-        tareas_proximas = Tarea.objects.filter(
-            completada=False,
-            fecha_vencimiento__gte=hoy
-        ).filter(
-            Q(visible_para_todos=True) |
-            Q(asignado_a=request.user)
-        ).distinct().order_by('fecha_vencimiento')
+    # Filtros desde query params
+    proyecto_id = request.GET.get('proyecto')
+    prioridad = request.GET.get('prioridad')
+    orden = request.GET.get('orden')
+    completadas = request.GET.get('completadas')
+    asignadas = request.GET.get('asignadas')
 
-        tareas_completadas = Tarea.objects.filter(
-            completada=True
-        ).filter(
-            Q(visible_para_todos=True) |
-            Q(asignado_a=request.user)
-        ).distinct().order_by('-fecha_vencimiento')[:5]
+    if proyecto_id:
+        tareas = tareas.filter(proyecto_id=proyecto_id)
 
-    return render(request, 'inicio.html', {
-        'tareas_proximas': tareas_proximas,
-        'tareas_completadas': tareas_completadas,
-    })
+    if prioridad:
+        tareas = tareas.filter(prioridad=prioridad)
 
+    if completadas == "true":
+        tareas = tareas.filter(completada=True)
+    elif completadas == "false":
+        tareas = tareas.filter(completada=False)
 
+    if asignadas == "true":
+        tareas = tareas.filter(asignado_a=user)
 
+    if orden == "recientes":
+        tareas = tareas.order_by("-fecha_vencimiento")
+    elif orden == "antiguas":
+        tareas = tareas.order_by("fecha_vencimiento")
+    elif orden == "prioridad":
+        tareas = tareas.order_by("prioridad")  # campo tipo choices
+
+    # Separar tareas completadas y pendientes
+    tareas_pendientes = tareas.filter(completada=False)
+    tareas_completadas = tareas.filter(completada=True)
+
+    # Paginación
+    pendientes_cant = int(request.GET.get("pendientes_cant", 5))
+    completadas_cant = int(request.GET.get("completadas_cant", 5))
+    pendientes_page = request.GET.get("pendientes_page")
+    completadas_page = request.GET.get("completadas_page")
+
+    pendientes_paginator = Paginator(tareas_pendientes, pendientes_cant)
+    completadas_paginator = Paginator(tareas_completadas, completadas_cant)
+
+    tareas_pendientes_paginadas = pendientes_paginator.get_page(pendientes_page)
+    tareas_completadas_paginadas = completadas_paginator.get_page(completadas_page)
+
+    # Estadísticas
+    total_tareas = tareas.count()
+    tareas_completadas_count = tareas_completadas.count()
+    tareas_pendientes_count = tareas_pendientes.count()
+    tareas_semana = tareas.filter(fecha_vencimiento__range=(hoy, semana)).count()
+
+    # Proyectos con tareas (asignadas al usuario)
+    proyectos_con_tareas = tareas.filter(asignado_a=user).values("proyecto__nombre").annotate(
+        pendientes=Count("id", filter=Q(completada=False)),
+        completadas=Count("id", filter=Q(completada=True))
+    )
+
+    eventos = EventoPersonal.objects.filter(usuario=user)
+
+    context = {
+        "tareas_pendientes_paginadas": tareas_pendientes_paginadas,
+        "tareas_completadas_paginadas": tareas_completadas_paginadas,
+        "tareas_proximas": tareas_pendientes.order_by("fecha_vencimiento")[:10],
+        "tareas_completadas": tareas_completadas.order_by("-fecha_vencimiento")[:10],
+        "pendientes_cant": pendientes_cant,
+        "completadas_cant": completadas_cant,
+        "proyectos": Proyecto.objects.all(),
+        "proyectos_con_tareas": proyectos_con_tareas,
+        "tareas_completadas_count": tareas_completadas_count,
+        "tareas_pendientes_count": tareas_pendientes_count,
+        "tareas_semana": tareas_semana,
+        "total_tareas": total_tareas,
+        "eventos": eventos,
+    }
+
+    return render(request, "inicio.html", context)

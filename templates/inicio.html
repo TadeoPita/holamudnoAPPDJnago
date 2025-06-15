@@ -1,138 +1,203 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}Inicio{% endblock %}
+
+<style>
+.glass-card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+}
+
+.tarea-card {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInUp 0.4s ease forwards;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeInUp 0.4s ease forwards;
+}
+
+.tarjeta-meta {
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tarjeta-meta-item i {
+  margin-right: 6px;
+}
+</style>
 
 {% block content %}
 <div class="d-flex">
-    <div class="flex-grow-1">
-        <h1 class="mb-4">📊 Panel Principal</h1>
+  <div class="flex-grow-1">
 
-        <div class="row g-4">
-            <!-- Tareas Próximas -->
-            <div class="col-lg-6">
-                <div class="card bg-dark text-white shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">📅 Tareas Próximas</h5>
-                        <div class="d-flex flex-column gap-2 mt-3">
-                            {% for tarea in tareas_proximas %}
-                            <div class="tarjeta">
-                                <h6 class="mb-1">{{ tarea.titulo }}</h6>
-                                <div class="tarjeta-meta">
-                                    <div class="tarjeta-meta-item" title="Proyecto">
-                                        <i class="fa-solid fa-folder"></i>
-                                        {{ tarea.proyecto.nombre }}
-                                    </div>
-                                    <div class="tarjeta-meta-item" title="Columna">
-                                        <i class="fa-solid fa-layer-group"></i>
-                                        {{ tarea.columna.nombre }}
-                                    </div>
-                                    <div class="tarjeta-meta-item" title="Fecha límite">
-                                        <i class="fa-solid fa-calendar"></i>
-                                        {{ tarea.fecha_vencimiento|date:"d M" }}
-                                    </div>
-
-                                    {% if user in tarea.puede_marcar_como_completada.all or user.is_staff %}
-                                    <div class="text-end my-1">
-                                        {% if not tarea.completada %}
-                                        <button id="btn-completar" class="btn btn-success bg-gradient"
-                                            hx-post="{% url 'marcar_como_completada' tarea.id %}" hx-trigger="click"
-                                            hx-swap="none" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-                                            onclick="this.innerText='Completada'; this.disabled=true;">
-                                            ✅ Marcar 
-                                        </button>
-                                        {% else %}
-                                        <span class="text-success">✅ Tarea ya completada por {{
-                                            tarea.completada_por.get_full_name|default:tarea.completada_por.username
-                                            }}</span>
-                                        {% endif %}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% empty %}
-                            <p class="text-muted mt-3">No hay tareas próximas.</p>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Tareas Completadas -->
-            <div class="col-lg-6">
-                <div class="card bg-success text-white shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">✅ Tareas Completadas</h5>
-                        <div class="d-flex flex-column gap-2 mt-3">
-                            {% for tarea in tareas_completadas %}
-                            <div class="tarjeta">
-                                <h6 class="mb-1">{{ tarea.titulo }}</h6>
-                                <div class="tarjeta-meta">
-                                    <div class="tarjeta-meta-item" title="Proyecto">
-                                        <i class="fa-solid fa-folder"></i>
-                                        {{ tarea.proyecto.nombre }}
-                                    </div>
-                                    <div class="tarjeta-meta-item" title="Columna">
-                                        <i class="fa-solid fa-layer-group"></i>
-                                        {{ tarea.columna.nombre }}
-                                    </div>
-                                    <div class="tarjeta-meta-item" title="Fecha límite">
-                                        <i class="fa-solid fa-calendar-check"></i>
-                                        {{ tarea.fecha_vencimiento|date:"d M" }}
-                                    </div>
-                                </div>
-                            </div>
-                            {% empty %}
-                            <p class="text-white-50 mt-3">No hay tareas completadas.</p>
-                            {% endfor %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Estadísticas -->
-            <div class="col-12">
-                <div class="card bg-dark text-white shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">📈 Estadísticas de Tareas</h5>
-                        <div id="chart-tareas" class="p-2"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Calendario -->
-            <div class="col-12">
-                <div class="card bg-dark text-white shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">🗓️ Calendario</h5>
-                        <div id="calendar-placeholder" class="p-4 text-center">
-                            Aquí irá el calendario 👷‍♂️
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <!-- 🧑‍💼 Bienvenida -->
+    <div class="mb-4">
+      <h2 class="text-white">Hola {{ user.first_name|default:user.username }}</h2>
+      <p class="text-white">Hoy es {{ now|date:"l d M Y" }}</p>
     </div>
+
+    <!-- 📊 Indicadores -->
+    <div class="row g-3 mb-5">
+      <div class="col-md-3">
+        <div class="card glass-card text-white p-3 shadow-sm">
+          <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-layer-group fa-2x"></i>
+            <div>
+              <small>Total</small>
+              <h5>{{ total_tareas }}</h5>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card glass-card text-white p-3 shadow-sm">
+          <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-check fa-2x"></i>
+            <div>
+              <small>Completadas</small>
+              <h5>{{ tareas_completadas_count }}</h5>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card glass-card text-white p-3 shadow-sm">
+          <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-hourglass-half fa-2x"></i>
+            <div>
+              <small>Pendientes</small>
+              <h5>{{ tareas_pendientes_count }}</h5>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card glass-card text-white p-3 shadow-sm">
+          <div class="d-flex align-items-center gap-2">
+            <i class="fa-solid fa-calendar-week fa-2x"></i>
+            <div>
+              <small>Esta Semana</small>
+              <h5>{{ tareas_semana }}</h5>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 📅 Tareas próximas y completadas -->
+    <div class="row g-4">
+      {% include 'inicio_parcial_tareas.html' %}
+    </div>
+
+    <!-- 📈 Estadísticas y calendario -->
+    <div class="row g-4 mt-2">
+      <div class="col-lg-6">
+        <div class="card bg-dark text-white shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title"><i class="fa-solid fa-chart-pie me-2"></i>Estadísticas</h5>
+            <div id="chart-tareas" style="min-height: 300px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="card glass-card text-white shadow-sm">
+          <div class="card-body">
+            <h5 class="card-title mb-3"><i class="fa-solid fa-calendar-days me-2"></i>Calendario Visual</h5>
+            <div id="calendario-visual" style="min-height: 400px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 📁 Proyectos con tareas -->
+    <div class="mt-4">
+      <div class="card glass-card text-white p-4 shadow-sm">
+        <h5 class="mb-3"><i class="fa-solid fa-diagram-project me-2"></i>Proyectos con tareas</h5>
+        <div class="row">
+          {% for item in proyectos_con_tareas %}
+          <div class="col-md-4 mb-3">
+            <div class="bg-dark text-white p-3 rounded shadow-sm h-100">
+              <h6>{{ item.proyecto__nombre }}</h6>
+              <small>Pendientes: {{ item.pendientes }} | Completadas: {{ item.completadas }}</small>
+              {% with total=item.pendientes|add:item.completadas %}
+              {% if total > 0 %}
+              {% widthratio item.completadas total 100 as porcentaje %}
+              <div class="progress mt-2" style="height: 6px;">
+                <div class="progress-bar bg-success" role="progressbar"
+                     style="width: {{ porcentaje }}%; background-color: #4fd1c5;"
+                     aria-valuenow="{{ porcentaje }}" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+              {% endif %}
+              {% endwith %}
+            </div>
+          </div>
+          {% empty %}
+          <p class="text-white">No tenés tareas asignadas en ningún proyecto.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+
+  </div>
 </div>
 {% endblock %}
 
+{% block extrajs %}
 <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" />
+
 <script>
-    const options = {
-        chart: {
-            type: 'donut',
-            background: 'transparent'
-        },
-        series: [{{ tareas_completadas.count }}, {{ tareas_proximas.count }}],
+document.addEventListener("DOMContentLoaded", function () {
+  // ApexCharts
+  new ApexCharts(document.querySelector("#chart-tareas"), {
+    chart: { type: 'donut', background: 'transparent' },
+    series: [{{ tareas_completadas.count }}, {{ tareas_proximas.count }}],
     labels: ['Completadas', 'Próximas'],
-        colors: ['#28a745', '#ffc107']
-  };
+    colors: ['#3eff6e', '#ffc107'],
+    legend: { labels: { colors: ['#fff'] } }
+  }).render();
 
-    const chart = new ApexCharts(document.querySelector("#chart-tareas"), options);
-    chart.render();
-</script>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const calendarPlaceholder = document.getElementById('calendar-placeholder');
-        calendarPlaceholder.innerHTML = '<p>Calendario cargado con éxito 📅</p>';
+  // FullCalendar
+  const calendarEl = document.getElementById("calendario-visual");
+  if (calendarEl) {
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      height: 400,
+      events: [
+        {% for tarea in tareas_proximas %}
+        {% if tarea.fecha_vencimiento %}
+        { title: "📝 {{ tarea.titulo|escapejs }}", start: "{{ tarea.fecha_vencimiento|date:'Y-m-d' }}", color: "#ffc107" },
+        {% endif %}
+        {% endfor %}
+        {% for tarea in tareas_completadas %}
+        {% if tarea.fecha_vencimiento %}
+        { title: "✅ {{ tarea.titulo|escapejs }}", start: "{{ tarea.fecha_vencimiento|date:'Y-m-d' }}", color: "#28a745" },
+        {% endif %}
+        {% endfor %}
+        {% for evento in eventos %}
+        { title: "📅 {{ evento.titulo|escapejs }}", start: "{{ evento.fecha_inicio }}", end: "{{ evento.fecha_fin }}", color: "{{ evento.color }}" },
+        {% endfor %}
+      ]
     });
+    calendar.render();
+  }
+});
+
 </script>
+{% endblock %}

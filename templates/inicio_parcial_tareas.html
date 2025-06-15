@@ -1,0 +1,165 @@
+<!-- 🔍 Filtros Avanzados -->
+<div class="d-flex justify-content-end mb-3">
+  <form method="get" class="row w-100 g-2">
+    <div class="col-md-3">
+      <label class="form-label text-white-50 small mb-1">📁 Proyecto</label>
+      <select name="proyecto" class="form-select form-select-sm bg-dark text-white">
+        <option value="">Todos</option>
+        {% for p in proyectos %}
+          <option value="{{ p.id }}" {% if request.GET.proyecto == p.id|stringformat:"s" %}selected{% endif %}>{{ p.nombre }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label text-white-50 small mb-1">🔥 Prioridad</label>
+      <select name="prioridad" class="form-select form-select-sm bg-dark text-white">
+        <option value="">Todas</option>
+        <option value="alta" {% if request.GET.prioridad == 'alta' %}selected{% endif %}>Alta</option>
+        <option value="media" {% if request.GET.prioridad == 'media' %}selected{% endif %}>Media</option>
+        <option value="baja" {% if request.GET.prioridad == 'baja' %}selected{% endif %}>Baja</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label text-white-50 small mb-1">🕓 Orden</label>
+      <select name="orden" class="form-select form-select-sm bg-dark text-white">
+        <option value="">---</option>
+        <option value="recientes" {% if request.GET.orden == 'recientes' %}selected{% endif %}>Más recientes</option>
+        <option value="antiguas" {% if request.GET.orden == 'antiguas' %}selected{% endif %}>Más antiguas</option>
+        <option value="prioridad" {% if request.GET.orden == 'prioridad' %}selected{% endif %}>Prioridad</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label text-white-50 small mb-1">✅ Estado</label>
+      <select name="completadas" class="form-select form-select-sm bg-dark text-white">
+        <option value="">Todas</option>
+        <option value="false" {% if request.GET.completadas == 'false' %}selected{% endif %}>Pendientes</option>
+        <option value="true" {% if request.GET.completadas == 'true' %}selected{% endif %}>Completadas</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label text-white-50 small mb-1">👤 Asignadas a mí</label>
+      <select name="asignadas" class="form-select form-select-sm bg-dark text-white">
+        <option value="">Todas</option>
+        <option value="true" {% if request.GET.asignadas == 'true' %}selected{% endif %}>Solo mías</option>
+      </select>
+    </div>
+    <div class="col-md-1 d-flex align-items-end">
+      <button type="submit" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-filter"></i></button>
+    </div>
+  </form>
+</div>
+
+<!-- 🟡 Tareas Pendientes -->
+<div class="col-lg-6">
+  <div class="card bg-dark text-white shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title mb-3">📅 Tareas Próximas</h5>
+      <div class="d-flex flex-column gap-2">
+        {% for tarea in tareas_pendientes_paginadas %}
+        <div class="tarjeta tarea-card"
+             data-prioridad="{{ tarea.prioridad }}"
+             data-vencimiento="{{ tarea.fecha_vencimiento|date:'Y-m-d' }}"
+             data-estado="{{ tarea.completada|yesno:'completada,pendiente' }}"
+             data-proyecto="{{ tarea.proyecto.id }}">
+          <h6 class="mb-1">{{ tarea.titulo }}</h6>
+          <div class="tarjeta-meta">
+            <div><i class="fa-solid fa-folder"></i> {{ tarea.proyecto.nombre }}</div>
+            <div><i class="fa-solid fa-layer-group"></i> {{ tarea.columna.nombre }}</div>
+            <div><i class="fa-solid fa-calendar"></i> {{ tarea.fecha_vencimiento|date:"d M" }}</div>
+            <div><i class="fa-solid fa-bolt text-warning"></i> {{ tarea.get_prioridad_display }}</div>
+          </div>
+          {% if user in tarea.puede_marcar_como_completada.all or user.is_staff %}
+          <div class="text-end my-1">
+            {% if not tarea.completada %}
+              <button class="btn btn-success btn-sm"
+                      hx-post="{% url 'marcar_como_completada' tarea.id %}"
+                      hx-trigger="click"
+                      hx-swap="none"
+                      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
+                      onclick="this.innerText='Completada'; this.disabled=true;">
+                ✅ Marcar
+              </button>
+            {% else %}
+              <span class="text-success small">✔ Completada por {{ tarea.completada_por.get_full_name|default:tarea.completada_por.username }}</span>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+        {% empty %}
+          <p class="text-white-50 mt-3">No hay tareas pendientes.</p>
+        {% endfor %}
+      </div>
+
+      <!-- 📄 Paginación -->
+      {% if tareas_pendientes_paginadas.has_other_pages %}
+      <nav class="mt-3">
+        <ul class="pagination pagination-sm justify-content-center">
+          {% if tareas_pendientes_paginadas.has_previous %}
+          <li class="page-item">
+            <a class="page-link bg-dark text-white"
+               href="?{% for key, value in request.GET.items %}{% if key != 'pendientes_page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}pendientes_page={{ tareas_pendientes_paginadas.previous_page_number }}">Anterior</a>
+          </li>
+          {% endif %}
+          <li class="page-item disabled">
+            <span class="page-link bg-dark text-white">Página {{ tareas_pendientes_paginadas.number }} de {{ tareas_pendientes_paginadas.paginator.num_pages }}</span>
+          </li>
+          {% if tareas_pendientes_paginadas.has_next %}
+          <li class="page-item">
+            <a class="page-link bg-dark text-white"
+               href="?{% for key, value in request.GET.items %}{% if key != 'pendientes_page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}pendientes_page={{ tareas_pendientes_paginadas.next_page_number }}">Siguiente</a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- ✅ Tareas Completadas -->
+<div class="col-lg-6">
+  <div class="card bg-success bg-gradient text-white shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title mb-3">✅ Tareas Completadas</h5>
+      <div class="d-flex flex-column gap-2">
+        {% for tarea in tareas_completadas_paginadas %}
+        <div class="tarjeta tarea-card bg-opacity-75 rounded p-2"
+             data-proyecto="{{ tarea.proyecto.id }}"
+             data-prioridad="{{ tarea.prioridad }}">
+          <h6 class="mb-1">{{ tarea.titulo }}</h6>
+          <div class="tarjeta-meta">
+            <div><i class="fa-solid fa-folder"></i> {{ tarea.proyecto.nombre }}</div>
+            <div><i class="fa-solid fa-layer-group"></i> {{ tarea.columna.nombre }}</div>
+            <div><i class="fa-solid fa-calendar-check"></i> {{ tarea.fecha_vencimiento|date:"d M" }}</div>
+          </div>
+        </div>
+        {% empty %}
+          <p class="text-white-50 mt-3">No hay tareas completadas.</p>
+        {% endfor %}
+      </div>
+
+      <!-- 📄 Paginación -->
+      {% if tareas_completadas_paginadas.has_other_pages %}
+      <nav class="mt-3">
+        <ul class="pagination pagination-sm justify-content-center">
+          {% if tareas_completadas_paginadas.has_previous %}
+          <li class="page-item">
+            <a class="page-link bg-success text-white"
+               href="?{% for key, value in request.GET.items %}{% if key != 'completadas_page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}completadas_page={{ tareas_completadas_paginadas.previous_page_number }}">Anterior</a>
+          </li>
+          {% endif %}
+          <li class="page-item disabled">
+            <span class="page-link bg-success text-white">Página {{ tareas_completadas_paginadas.number }} de {{ tareas_completadas_paginadas.paginator.num_pages }}</span>
+          </li>
+          {% if tareas_completadas_paginadas.has_next %}
+          <li class="page-item">
+            <a class="page-link bg-success text-white"
+               href="?{% for key, value in request.GET.items %}{% if key != 'completadas_page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}completadas_page={{ tareas_completadas_paginadas.next_page_number }}">Siguiente</a>
+          </li>
+          {% endif %}
+        </ul>
+      </nav>
+      {% endif %}
+    </div>
+  </div>
+</div>
