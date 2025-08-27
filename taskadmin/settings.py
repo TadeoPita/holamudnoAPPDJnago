@@ -134,3 +134,21 @@ TEMPLATES[0]['DIRS'] = [BASE_DIR / 'templates']
 
 LOGIN_REDIRECT_URL = 'lista_proyectos'  # o donde quieras ir al loguearte
 LOGOUT_REDIRECT_URL = 'login'
+
+
+
+
+META_ACCESS_TOKEN = 'EAAIYtJZCK71cBPOFmOX1ZBtMQ74R2KxXqc8uU59VpT5paXfGOYpaRS6pn2jsgbyZAS6rufXv7F2TO4390zjzl7dJC8BsgpNElqRApUJxXIZBZA0fCZAvjqZCurgNxZAWefrDbiAlOgKYMkYOXmOS45BZB1WiuYiNgmFZBz42lm8MJQnbE2U266g2NxJNe8Bs3ZAYZBpm9tpu50GfwEWxis6b5kd8Y0ZA1dBpu9ZB8qIzts1afZAQZCrrCInrlNdcwGQ1O3FVJ8R8WPj2NHbaKeTXPbcFLl9141ws7hjmegZDZD'
+GRAPH_API_URL = 'https://graph.facebook.com/v17.0'
+
+
+
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_HOST_USER = 'mostudioapp@gmail.com'
+EMAIL_HOST_PASSWORD = 'qtcm wmjs lwsp qqke'
+EMAIL_USE_TLS = True
+DEFAULT_FROM_EMAIL = 'Gestor de Tareas <mostudioapp@gmail.com>'

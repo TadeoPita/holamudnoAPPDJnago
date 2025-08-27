@@ -36,6 +36,8 @@ def crear_proyecto(request):
     return render(request, 'proyecto/crear_proyecto.html', {'form': form})
 
 from django.db.models import Case, When, IntegerField
+from django.db.models import Case, When, IntegerField
+
 @login_required
 def detalle_proyecto(request, proyecto_id):
     proyecto = get_object_or_404(Proyecto, id=proyecto_id)
@@ -67,9 +69,9 @@ def detalle_proyecto(request, proyecto_id):
             tareas = tareas.order_by("fecha_creacion")
         elif orden == "prioridad":
             prioridad_orden = Case(
-                When(prioridad="alta", then=1),
-                When(prioridad="media", then=2),
-                When(prioridad="baja", then=3),
+                When(prioridad="reel", then=1),
+                When(prioridad="publicacion", then=2),
+                When(prioridad="historia", then=3),
                 output_field=IntegerField()
             )
             tareas = tareas.order_by(prioridad_orden)
@@ -81,6 +83,8 @@ def detalle_proyecto(request, proyecto_id):
         'columnas': columnas
     })
 
+
+from tarea.utils import notificar_tarea_evento
 
 @login_required
 def crear_tarea(request, proyecto_id):
@@ -97,6 +101,9 @@ def crear_tarea(request, proyecto_id):
             tarea.modificado_por = request.user
             tarea.save()
             form.save_m2m()
+
+            notificar_tarea_evento(tarea, "asignada", request.user)
+
             return redirect('detalle_proyecto', proyecto_id=proyecto.id)
     else:
         form = TareaForm()
@@ -159,9 +166,14 @@ def inicio(request):
     semana = hoy + timedelta(days=7)
 
     # Obtener todas las tareas
-    tareas = Tarea.objects.select_related("proyecto", "columna") \
+    if request.user.is_staff:
+        tareas = Tarea.objects.select_related("proyecto", "columna") \
                           .prefetch_related("etiquetas", "asignado_a") \
                           .all()
+    else:
+        tareas = Tarea.objects.select_related("proyecto", "columna") \
+                          .prefetch_related("etiquetas", "asignado_a") \
+                          .filter(asignado_a=request.user)
 
     # Filtros desde query params
     proyecto_id = request.GET.get('proyecto')

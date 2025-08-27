@@ -1,0 +1,269 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard de Instagram</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .metric-card {
+            min-height: 100px;
+        }
+        .profile-pic {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+<div class="container py-4">
+
+    <h1 class="mb-4">Dashboard de {{ cuenta.username }}</h1>
+
+    <!-- Filtros -->
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-3">
+            <label>Desde:</label>
+            <input type="date" name="desde" value="{{ fecha_inicio }}" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label>Hasta:</label>
+            <input type="date" name="hasta" value="{{ fecha_fin }}" class="form-control">
+        </div>
+        <div class="col-md-3 align-self-end">
+            <button type="submit" class="btn btn-primary">Filtrar</button>
+        </div>
+    </form>
+
+    <!-- Info General -->
+    <div class="row align-items-center mb-4">
+        <div class="col-md-2">
+            <img src="{{ cuenta.profile_picture_url }}" alt="Foto Perfil" class="profile-pic">
+        </div>
+        <div class="col-md-10">
+            <h3>{{ cuenta.name }}</h3>
+            <p>{{ cuenta.biography }}</p>
+            <p><strong>Website:</strong> <a href="{{ cuenta.website }}" target="_blank">{{ cuenta.website }}</a></p>
+        </div>
+    </div>
+
+    <!-- Métricas Generales -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card text-center metric-card">
+                <div class="card-body">
+                    <h5 class="card-title">Seguidores</h5>
+                    <p class="fs-4">{{ cuenta.followers_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center metric-card">
+                <div class="card-body">
+                    <h5 class="card-title">Seguidos</h5>
+                    <p class="fs-4">{{ cuenta.follows_count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center metric-card">
+                <div class="card-body">
+                    <h5 class="card-title">Publicaciones</h5>
+                    <p class="fs-4">{{ cuenta.media_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas Insights -->
+    <h4 class="mb-3">Métricas de Insights</h4>
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card text-center metric-card">
+                <div class="card-body">
+                    <h5 class="card-title">Alcance</h5>
+                    <p class="fs-4">{{ insights.reach|default:"0" }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center metric-card">
+                <div class="card-body">
+                    <h5 class="card-title">Impresiones</h5>
+                    <p class="fs-4">{{ insights.impressions|default:"0" }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center metric-card">
+                <div class="card-body">
+                    <h5 class="card-title">Vistas Perfil</h5>
+                    <p class="fs-4">{{ insights.profile_views|default:"0" }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center metric-card">
+                <div class="card-body">
+                    <h5 class="card-title">Clicks Sitio Web</h5>
+                    <p class="fs-4">{{ insights.website_clicks|default:"0" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card text-center metric-card">
+                <div class="card-body">
+                    <h5 class="card-title">Emails</h5>
+                    <p class="fs-4">{{ insights.email_contacts|default:"0" }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center metric-card">
+                <div class="card-body">
+                    <h5 class="card-title">Llamadas</h5>
+                    <p class="fs-4">{{ insights.phone_call_clicks|default:"0" }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center metric-card">
+                <div class="card-body">
+                    <h5 class="card-title">Mensajes</h5>
+                    <p class="fs-4">{{ insights.text_message_clicks|default:"0" }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center metric-card">
+                <div class="card-body">
+                    <h5 class="card-title">Cómo llegar</h5>
+                    <p class="fs-4">{{ insights.get_directions_clicks|default:"0" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    {% if paises %}
+<h4 class="mt-4">Audiencia por País</h4>
+<ul>
+    {% for pais, porcentaje in paises %}
+        <li>{{ pais }}: {{ porcentaje }}%</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+{% if genero %}
+<h4 class="mt-4">Audiencia por Género/Edad</h4>
+<ul>
+    {% for grupo, porcentaje in genero %}
+        <li>{{ grupo }}: {{ porcentaje }}%</li>
+    {% endfor %}
+</ul>
+{% endif %}
+
+
+    <!-- Demografía -->
+    {% if paises %}
+        <h4 class="mt-4">Audiencia por País</h4>
+        <ul>
+            {% for pais, porcentaje in paises %}
+                <li>{{ pais }}: {{ porcentaje }}%</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if genero %}
+        <h4 class="mt-4">Audiencia por Género/Edad</h4>
+        <ul>
+            {% for grupo, porcentaje in genero %}
+                <li>{{ grupo }}: {{ porcentaje }}%</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    {% if ciudades %}
+        <h4 class="mt-4">Audiencia por Ciudad</h4>
+        <ul>
+            {% for ciudad, cantidad in ciudades %}
+                <li>{{ ciudad }}: {{ cantidad }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+
+    <!-- Publicaciones -->
+    <h4 class="mt-4">Publicaciones</h4>
+    {% if media %}
+        <div class="row g-3">
+            {% for post in media %}
+                <div class="col-md-4">
+                    <div class="card h-100">
+                        {% if post.media_type == "IMAGE" or post.media_type == "CAROUSEL_ALBUM" %}
+                            <img src="{{ post.media_url }}" class="card-img-top" alt="Publicación">
+                        {% elif post.media_type == "VIDEO" %}
+                            <video controls class="card-img-top">
+                                <source src="{{ post.media_url }}" type="video/mp4">
+                            </video>
+                        {% endif %}
+                        <div class="card-body">
+                            <p><strong>ID:</strong> {{ post.id }}</p>
+                            <p>{{ post.caption }}</p>
+                            <ul class="list-unstyled">
+                                <li>Likes: {{ post.like_count }}</li>
+                                <li>Comentarios: {{ post.comments_count }}</li>
+                                <li>Impresiones: {{ post.metrics.impressions|default:"0" }}</li>
+                                <li>Alcance: {{ post.metrics.reach|default:"0" }}</li>
+                                <li>Engagement: {{ post.metrics.engagement|default:"0" }}</li>
+                                <li>Guardados: {{ post.metrics.saved|default:"0" }}</li>
+                                {% if post.metrics.video_views %}
+                                    <li>Reproducciones Video: {{ post.metrics.video_views }}</li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Paginación -->
+        <div class="mt-4">
+            <nav>
+                <ul class="pagination justify-content-center">
+                    {% if media.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ media.previous_page_number }}&desde={{ fecha_inicio }}&hasta={{ fecha_fin }}">Anterior</a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item disabled">
+                        <span class="page-link">Página {{ media.number }} de {{ media.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if media.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ media.next_page_number }}&desde={{ fecha_inicio }}&hasta={{ fecha_fin }}">Siguiente</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+
+    {% else %}
+        <div class="alert alert-warning mt-4">
+            No se encontraron publicaciones recientes.
+        </div>
+    {% endif %}
+
+    <a href="{% url 'calendario:cuentas' %}" class="btn btn-secondary mt-4">Volver a Cuentas</a>
+
+</div>
+
+</body>
+</html>

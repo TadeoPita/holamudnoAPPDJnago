@@ -459,6 +459,20 @@
         .badge.rounded-pill.etiqueta {
             background-color: #6c63ff;
         }
+
+        input.form-control.form-control-sm.bg-dark.text-white.border-secondary::placeholder {
+            color: #ffffff42;
+        }
+        .row-equal-height {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.row-equal-height > [class*='col-'] {
+  display: flex;
+  flex-direction: column;
+}
+
     </style>
 
 </head>
@@ -483,7 +497,7 @@
                 </a>
             </li>
             <li class="nav-item" title="Calendario">
-                <a href="{% url 'mi_calendario' %}" class="nav-link">
+                <a href="{% url 'calendario:mi_calendario' %}" class="nav-link">
                     <i class="fa-solid fa-calendar-days"></i>
                 </a>
             </li>

@@ -63,6 +63,8 @@ def lista_tareas_usuario(request):
 # Editar tarea
 
 
+from tarea.utils import notificar_tarea_evento
+
 @login_required
 def editar_tarea(request, id):
     tarea = get_object_or_404(Tarea, id=id)
@@ -82,6 +84,9 @@ def editar_tarea(request, id):
             tarea.modificado_por = request.user
             tarea.save()
             form.save_m2m()
+
+            notificar_tarea_evento(tarea, "editada", request.user)
+
             return redirect('detalle_proyecto', proyecto_id=proyecto.id)
         else:
             form.fields['columna'].queryset = proyecto.columnas.all()
@@ -93,6 +98,7 @@ def editar_tarea(request, id):
         'form': form,
         'tarea': tarea
     })
+
 
 # Eliminar tarea
 
@@ -224,6 +230,8 @@ def mover_tarea(request, tarea_id):
     tarea.columna = nueva_columna
     tarea.save()
 
+    notificar_tarea_evento(tarea, "movida de columna", request.user)
+
     return JsonResponse({"ok": True})
 
 
@@ -279,6 +287,8 @@ def marcar_como_completada(request, tarea_id):
     tarea.completada = True
     tarea.completada_por = request.user
     tarea.save()
+
+    notificar_tarea_evento(tarea, "marcada como completada ✅", request.user)
 
     return render(request, "tarea/modals/tarea_detalle.html", {
         "tarea": tarea,

@@ -37,6 +37,8 @@
 .tarjeta-meta-item i {
   margin-right: 6px;
 }
+
+
 </style>
 
 {% block content %}
@@ -104,20 +106,13 @@
 
     <!-- 📈 Estadísticas y calendario -->
     <div class="row g-4 mt-2">
-      <div class="col-lg-6">
-        <div class="card bg-dark text-white shadow-sm">
-          <div class="card-body">
-            <h5 class="card-title"><i class="fa-solid fa-chart-pie me-2"></i>Estadísticas</h5>
-            <div id="chart-tareas" style="min-height: 300px;"></div>
-          </div>
-        </div>
-      </div>
+  
 
-      <div class="col-lg-6">
+      <div class="row g-4 mt-2">
         <div class="card glass-card text-white shadow-sm">
           <div class="card-body">
             <h5 class="card-title mb-3"><i class="fa-solid fa-calendar-days me-2"></i>Calendario Visual</h5>
-            <div id="calendario-visual" style="min-height: 400px;"></div>
+            <div id="calendario-visual" style="min-height: 510px;"></div>
           </div>
         </div>
       </div>
@@ -164,20 +159,14 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  // ApexCharts
-  new ApexCharts(document.querySelector("#chart-tareas"), {
-    chart: { type: 'donut', background: 'transparent' },
-    series: [{{ tareas_completadas.count }}, {{ tareas_proximas.count }}],
-    labels: ['Completadas', 'Próximas'],
-    colors: ['#3eff6e', '#ffc107'],
-    legend: { labels: { colors: ['#fff'] } }
-  }).render();
+  
 
   // FullCalendar
   const calendarEl = document.getElementById("calendario-visual");
   if (calendarEl) {
     const calendar = new FullCalendar.Calendar(calendarEl, {
       initialView: 'dayGridMonth',
+      timeZone: 'local',
       height: 400,
       events: [
         {% for tarea in tareas_proximas %}
@@ -198,6 +187,5 @@ document.addEventListener("DOMContentLoaded", function () {
     calendar.render();
   }
 });
-
 </script>
 {% endblock %}

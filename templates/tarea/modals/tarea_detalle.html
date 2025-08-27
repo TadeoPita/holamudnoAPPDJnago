@@ -159,7 +159,6 @@
             hx-on::afterRequest="htmx.ajax('GET', '/tarea/{{ tarea.id }}/card_snippet/', '#tarea-card-{{ tarea.id }}'); checkEmptyList('#adjuntos-list', 'adjuntos-empty');"
             enctype="multipart/form-data" method="POST" class="adjunto-form mt-2">
             {% csrf_token %}
-            <div class="mb-2">{{ adjunto_form.archivo.label_tag }}{{ adjunto_form.archivo }}</div>
             <div class="mb-2">{{ adjunto_form.url.label_tag }}{{ adjunto_form.url }}</div>
             <button type="submit" class="btn btn-purple btn-sm">📎 Subir Adjunto</button>
           </form>

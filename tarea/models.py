@@ -22,14 +22,14 @@ class Columna(models.Model):
 
 class Tarea(models.Model):
     PRIORIDADES = [
-        ('baja', 'Baja'),
-        ('media', 'Media'),
-        ('alta', 'Alta'),
+        ('historia', 'Historia'),
+        ('publicacion', 'Publicacion'),
+        ('reel', 'Reel'),
     ]
     visible_para_todos = models.BooleanField(default=False)
     titulo = models.CharField(max_length=255)
     descripcion = models.TextField()
-    prioridad = models.CharField(max_length=10, choices=PRIORIDADES)
+    prioridad = models.CharField(max_length=30, choices=PRIORIDADES)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_vencimiento = models.DateField(null=True, blank=True)
     completada = models.BooleanField(default=False)

@@ -104,12 +104,12 @@
             <!-- Etiquetas de colores (prioridad visual) -->
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <div class="tarjeta-etiquetas">
-                    {% if tarea.get_prioridad_display == "Alta" %}
-                    <span class="etiqueta" style="background-color: var(--card-red);" title="Alta"></span>
-                    {% elif tarea.get_prioridad_display == "Media" %}
-                    <span class="etiqueta" style="background-color: var(--card-orange);" title="Media"></span>
-                    {% elif tarea.get_prioridad_display == "Baja" %}
-                    <span class="etiqueta" style="background-color: var(--card-green);" title="Baja"></span>
+                    {% if tarea.get_prioridad_display == "Reel" %}
+                    <span class="etiqueta" style="background-color: var(--card-red);" title="Reel"></span>
+                    {% elif tarea.get_prioridad_display == "Publicacion" %}
+                    <span class="etiqueta" style="background-color: var(--card-orange);" title="Publicación"></span>
+                    {% elif tarea.get_prioridad_display == "Historia" %}
+                    <span class="etiqueta" style="background-color: var(--card-green);" title="Historia"></span>
                     {% endif %}
                 </div>
 

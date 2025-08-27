@@ -1,0 +1,13 @@
+<!-- templates/emails/notificacion_tarea.html -->
+<p>Hola 👋,</p>
+
+<p>La tarea <strong>{{ tarea.titulo }}</strong> fue <strong>{{ accion }}</strong> por {{ usuario }}.</p>
+
+<ul>
+    <li><strong>Proyecto:</strong> {{ tarea.proyecto.nombre }}</li>
+    <li><strong>Columna:</strong> {{ tarea.columna.nombre }}</li>
+    <li><strong>Prioridad:</strong> {{ tarea.get_prioridad_display }}</li>
+    <li><strong>Vence:</strong> {{ tarea.fecha_vencimiento }}</li>
+</ul>
+
+<p>Podés verla en tu panel de tareas. 👀</p>
